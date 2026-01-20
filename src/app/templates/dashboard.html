@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visage Edge - Building Access Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark-bg: #0f0f23;
+            --card-bg: #1a1a2e;
+            --card-hover: #16213e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --border-color: rgba(255,255,255,0.1);
+        }
+        
+        * { font-family: 'Inter', sans-serif; }
+        
+        body {
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            min-height: 100vh;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            width: 260px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-brand {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .sidebar-brand h4 {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            margin: 0.25rem 0.75rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .sidebar .nav-link.active {
+            color: var(--text-primary);
+            background: var(--primary-gradient);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .sidebar .nav-link i { width: 20px; text-align: center; }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-header h1 {
+            font-weight: 600;
+            font-size: 1.75rem;
+            margin: 0;
+        }
+        
+        /* Cards */
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        
+        .stat-card .icon-wrapper {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-card .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        /* Building Cards */
+        .building-card,
+        .group-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .group-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--group-color, var(--primary-gradient));
+        }
+        
+        .group-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            border-color: var(--group-color, #667eea);
+        }
+        
+        .group-card .group-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .group-card .group-name {
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .group-card .group-stats {
+            display: flex;
+            gap: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        /* Door Cards */
+        .door-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .door-card:hover { background: var(--card-hover); }
+        
+        .door-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .door-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .door-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .door-status.online { background: #38ef7d; }
+        .door-status.offline { background: #eb3349; }
+        .door-status.locked { background: #f5576c; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Access Log */
+        .log-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .log-item:hover { background: var(--card-hover); }
+        
+        .log-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .log-icon.granted { background: rgba(56, 239, 125, 0.2); color: #38ef7d; }
+        .log-icon.denied { background: rgba(235, 51, 73, 0.2); color: #eb3349; }
+        
+        /* Buttons */
+        .btn-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .btn-outline-light {
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+        
+        .btn-unlock {
+            background: var(--success-gradient);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .btn-unlock:hover {
+            box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
+            color: white;
+        }
+        
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        
+        .section-header h5 {
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* User Avatar */
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        /* Modal Styles */
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .modal-body { padding: 1.5rem; }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+        }
+        
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            color: var(--text-primary);
+        }
+        
+        .form-control::placeholder { color: var(--text-secondary); }
+        
+        .form-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Fix for select options in dark mode */
+        .form-select option {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        /* Dropdown Menu Styles */
+        .dropdown-menu {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        
+        .dropdown-item {
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--card-hover);
+            color: var(--text-primary);
+        }
+        
+        .dropdown-divider {
+            border-top-color: var(--border-color);
+        }
+        
+        /* Responsive */
+        @media (max-width: 991.98px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--card-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+        
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1100;
+        }
+        
+        .toast {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+        
+        /* Live Feed Badge */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.375rem 0.75rem;
+            background: rgba(235, 51, 73, 0.2);
+            color: #eb3349;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .live-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #eb3349;
+            border-radius: 50%;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand d-flex flex-column align-items-center justify-content-center">
+            
+            <h4 class="mb-2">Visage Edge</h4>
+            <small class="text-secondary fw-bold" style="letter-spacing: 1px; font-size: 0.7rem; text-transform: uppercase;">Building Access Control</small>
+        </div>
+        <ul class="nav flex-column mt-3">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-page="dashboard">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-page="groups">
+                    <i class="fas fa-building"></i>
+                    <span>Buildings</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-page="doors">
+                    <i class="fas fa-door-open"></i>
+                    <span>Doors</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>Employees</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-page="logs">
+                    <i class="fas fa-history"></i>
+                    <span>Access Logs</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Page -->
+        <div id="page-dashboard" class="page-content">
+            <div class="page-header">
+                <div>
+                    <h1>Dashboard</h1>
+                    <p class="text-secondary mb-0">Welcome to Visage Edge Door Access Control</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="live-badge">LIVE</span>
+                    <button class="btn btn-outline-light" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="icon-wrapper" style="background: var(--primary-gradient);">
+                            <i class="fas fa-building text-white"></i>
+                        </div>
+                        <div class="stat-value" id="stat-groups">-</div>
+                        <div class="stat-label">Buildings</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="icon-wrapper" style="background: var(--info-gradient);">
+                            <i class="fas fa-door-open text-white"></i>
+                        </div>
+                        <div class="stat-value" id="stat-doors">-</div>
+                        <div class="stat-label">Total Doors</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="icon-wrapper" style="background: var(--success-gradient);">
+                            <i class="fas fa-users text-white"></i>
+                        </div>
+                        <div class="stat-value" id="stat-users">-</div>
+                        <div class="stat-label">Linked Employees</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="icon-wrapper" style="background: var(--warning-gradient);">
+                            <i class="fas fa-unlock-alt text-white"></i>
+                        </div>
+                        <div class="stat-value" id="stat-today">-</div>
+                        <div class="stat-label">Today's Access Events</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Buildings Section -->
+                <div class="col-lg-8">
+                    <div class="section-header">
+                        <h5><i class="fas fa-building me-2 text-primary"></i>Buildings</h5>
+                        <button class="btn btn-gradient btn-sm" onclick="showAddGroupModal()">
+                            <i class="fas fa-plus me-1"></i>Add Building
+                        </button>
+                    </div>
+                    <div class="row g-3" id="groups-container"></div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="col-lg-4">
+                    <div class="section-header">
+                        <h5><i class="fas fa-history me-2 text-info"></i>Recent Activity</h5>
+                        <a href="#" class="btn btn-outline-light btn-sm" data-page="logs">View All</a>
+                    </div>
+                    <div id="recent-activity"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buildings Page -->
+        <div id="page-groups" class="page-content" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1>Buildings</h1>
+                    <p class="text-secondary mb-0">Manage buildings and their doors</p>
+                </div>
+                <button class="btn btn-gradient" onclick="showAddGroupModal()">
+                    <i class="fas fa-plus me-2"></i>Add Building
+                </button>
+            </div>
+            <div class="row g-4" id="groups-full-container"></div>
+        </div>
+
+        <!-- Doors Page -->
+        <div id="page-doors" class="page-content" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1>Doors</h1>
+                    <p class="text-secondary mb-0">Manage physical doors and user access permissions</p>
+                </div>
+                <button class="btn btn-gradient" onclick="showAddDoorModal()">
+                    <i class="fas fa-plus me-2"></i>Add Door
+                </button>
+            </div>
+            <div class="row g-4" id="doors-container"></div>
+        </div>
+
+        <!-- Users Page -->
+        <div id="page-users" class="page-content" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1>Employees</h1>
+                    <p class="text-secondary mb-0">Manage employee door access permissions</p>
+                </div>
+                <button class="btn btn-gradient" onclick="showAddUserModal()">
+                    <i class="fas fa-plus me-2"></i>Link Employee
+                </button>
+            </div>
+            <div class="row g-4" id="users-container"></div>
+        </div>
+
+        <!-- Logs Page -->
+        <div id="page-logs" class="page-content" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1>Access Logs</h1>
+                    <p class="text-secondary mb-0">View all access events and activity</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <select class="form-select" id="log-filter-group" style="width: auto;">
+                        <option value="">All Buildings</option>
+                    </select>
+                    <button class="btn btn-outline-light" onclick="loadAccessLogs()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div id="logs-container"></div>
+        </div>
+    </main>
+
+    <!-- Add Building Modal -->
+    <div class="modal fade" id="addGroupModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-building me-2"></i>Add Building</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addGroupForm">
+                        <div class="mb-3">
+                            <label class="form-label">Building Name</label>
+                            <input type="text" class="form-control" id="groupName" required placeholder="e.g., A Building">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="groupDescription" rows="2" placeholder="Optional description (e.g., location, address)"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Color</label>
+                                <input type="color" class="form-control form-control-color w-100" id="groupColor" value="#667eea">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Icon</label>
+                                <select class="form-select" id="groupIcon">
+                                    <option value="building">Office Building</option>
+                                    <option value="industry">Industrial</option>
+                                    <option value="warehouse">Warehouse</option>
+                                    <option value="hospital">Medical</option>
+                                    <option value="university">Campus</option>
+                                    <option value="store">Retail</option>
+                                    <option value="hotel">Hotel</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-gradient" onclick="createGroup()">Create Building</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Door Modal -->
+    <div class="modal fade" id="addDoorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-door-open me-2"></i>Add Door</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addDoorForm">
+                        <div class="mb-3">
+                            <label class="form-label">Door Name</label>
+                            <input type="text" class="form-control" id="doorName" required placeholder="e.g., Main Entrance">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <input type="text" class="form-control" id="doorLocation" placeholder="e.g., Ground Floor">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Building</label>
+                            <select class="form-select" id="doorGroup" required></select>
+                        </div>
+                        <div class="row">
+                            <div class="col-8 mb-3">
+                                <label class="form-label">IP Address</label>
+                                <input type="text" class="form-control" id="doorIP" placeholder="192.168.1.100">
+                            </div>
+                            <div class="col-4 mb-3">
+                                <label class="form-label">Port</label>
+                                <input type="number" class="form-control" id="doorPort" value="80">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-gradient" onclick="createDoor()">Add Door</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Link Employee</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Enter an Employee ID that is already registered in the central Visage system. The employee details will be fetched automatically.
+                    </div>
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">Employee ID</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="userId" required placeholder="e.g., InSP/2025/4593/526">
+                                <button type="button" class="btn btn-outline-light" onclick="verifyEmployee()" id="verifyBtn">
+                                    <i class="fas fa-search me-1"></i>Verify
+                                </button>
+                            </div>
+                            <small class="text-secondary">Format: InSP/YYYY/XXXX/XXX or InSP/YYYY/XXXX/XXX - Name</small>
+                        </div>
+                        <div id="employeeDetails" style="display: none;">
+                            <div class="alert alert-success small mb-3" id="verifySuccess">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span id="verifyMessage">Employee verified successfully!</span>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="userName" readonly placeholder="Will be fetched from server">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" id="userDepartment" placeholder="Department">
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">Email (Optional)</label>
+                                    <input type="email" class="form-control" id="userEmail" placeholder="email@company.com">
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="userRole" value="employee">
+                        <input type="hidden" id="employeeVerified" value="false">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-gradient" onclick="createUser()" id="addUserBtn" disabled>Link Employee</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Door Authorization Modal -->
+    <div class="modal fade" id="authorizeUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-key me-2"></i>Manage Door Access</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary mb-3">Select which doors <strong id="authUserName"></strong> can access</p>
+                    <input type="hidden" id="authUserId">
+                    <div id="authDoorsList"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-gradient" onclick="saveUserAuthorization()">Save Permissions</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Building Details Modal -->
+    <div class="modal fade" id="groupDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-building me-2"></i><span id="groupDetailName"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-4" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#groupDoors">
+                                <i class="fas fa-door-open me-2"></i>Doors
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#groupUsers">
+                                <i class="fas fa-users me-2"></i>Authorized Users
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="groupDoors"></div>
+                        <div class="tab-pane fade" id="groupUsers"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let groups = [];
+        let doors = [];
+        let users = [];
+        let accessLogs = [];
+        const API_BASE = '/api/v1/door-access';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initNavigation();
+            loadDashboard();
+            setInterval(refreshDashboard, 30000);
+        });
+        
+        function initNavigation() {
+            document.querySelectorAll('[data-page]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPage(e.currentTarget.dataset.page);
+                });
+            });
+        }
+        
+        function showPage(page) {
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.page === page) link.classList.add('active');
+            });
+            document.querySelectorAll('.page-content').forEach(c => c.style.display = 'none');
+            document.getElementById(`page-${page}`).style.display = 'block';
+            
+            switch(page) {
+                case 'dashboard': loadDashboard(); break;
+                case 'groups': loadGroupsPage(); break;
+                case 'doors': loadDoorsPage(); break;
+                case 'users': loadUsersPage(); break;
+                case 'logs': loadAccessLogs(); break;
+            }
+        }
+        
+        async function loadDashboard() {
+            try {
+                const [stats, groupsData, logsData] = await Promise.all([
+                    fetch(`${API_BASE}/stats`).then(r => r.json()),
+                    fetch(`${API_BASE}/groups`).then(r => r.json()),
+                    fetch(`${API_BASE}/access-logs?limit=10`).then(r => r.json())
+                ]);
+                groups = groupsData;
+                accessLogs = logsData;
+                
+                document.getElementById('stat-groups').textContent = stats.total_groups;
+                document.getElementById('stat-doors').textContent = stats.total_doors;
+                document.getElementById('stat-users').textContent = stats.total_users;
+                document.getElementById('stat-today').textContent = stats.today_access_events;
+                
+                renderDashboardGroups();
+                renderRecentActivity();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showToast('Failed to load dashboard data', 'error');
+            }
+        }
+        
+        function renderDashboardGroups() {
+            document.getElementById('groups-container').innerHTML = groups.map(g => `
+                <div class="col-md-6">
+                    <div class="group-card" style="--group-color: ${g.color};" onclick="showGroupDetails('${g.id}')">
+                        <div class="group-icon" style="background: ${g.color}20; color: ${g.color};">
+                            <i class="fas fa-${g.icon}"></i>
+                        </div>
+                        <div class="group-name">${g.name}</div>
+                        <p class="text-secondary small mb-2">${g.description || 'No description'}</p>
+                        <div class="group-stats">
+                            <span><i class="fas fa-door-open me-1"></i>${g.door_count} doors</span>
+                            <span><i class="fas fa-users me-1"></i>${g.user_count} users</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderRecentActivity() {
+            const container = document.getElementById('recent-activity');
+            if (accessLogs.length === 0) {
+                container.innerHTML = '<p class="text-secondary text-center py-4">No recent activity</p>';
+                return;
+            }
+            container.innerHTML = accessLogs.slice(0, 8).map(log => `
+                <div class="log-item">
+                    <div class="log-icon ${log.event_type}">
+                        <i class="fas fa-${log.event_type === 'granted' ? 'check' : 'times'}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-medium">${log.user_name || 'Unknown'}</div>
+                        <small class="text-secondary">${log.door_name || log.door_id}</small>
+                    </div>
+                    <small class="text-secondary">${formatTime(log.timestamp)}</small>
+                </div>
+            `).join('');
+        }
+        
+        async function refreshDashboard() {
+            await loadDashboard();
+        }
+        
+        async function loadGroupsPage() {
+            try {
+                groups = await fetch(`${API_BASE}/groups`).then(r => r.json());
+                document.getElementById('groups-full-container').innerHTML = groups.map(g => `
+                    <div class="col-md-4">
+                        <div class="group-card" style="--group-color: ${g.color};">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="group-icon" style="background: ${g.color}20; color: ${g.color};">
+                                    <i class="fas fa-${g.icon}"></i>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#" onclick="showGroupDetails('${g.id}')"><i class="fas fa-eye me-2"></i>View Details</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteGroup('${g.id}')"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="group-name">${g.name}</div>
+                            <p class="text-secondary small mb-3">${g.description || 'No description'}</p>
+                            <div class="group-stats">
+                                <span><i class="fas fa-door-open me-1"></i>${g.door_count} doors</span>
+                                <span><i class="fas fa-users me-1"></i>${g.user_count} users</span>
+                            </div>
+                            <button class="btn btn-gradient btn-sm w-100 mt-3" onclick="showGroupDetails('${g.id}')">Manage Building</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast('Failed to load buildings', 'error');
+            }
+        }
+        
+        async function loadDoorsPage() {
+            try {
+                const [doorsData, groupsData] = await Promise.all([
+                    fetch(`${API_BASE}/doors`).then(r => r.json()),
+                    fetch(`${API_BASE}/groups`).then(r => r.json())
+                ]);
+                doors = doorsData;
+                groups = groupsData;
+                
+                const doorsByGroup = {};
+                doors.forEach(d => {
+                    if (!doorsByGroup[d.group_id]) doorsByGroup[d.group_id] = [];
+                    doorsByGroup[d.group_id].push(d);
+                });
+                
+                let html = '';
+                groups.forEach(g => {
+                    const groupDoors = doorsByGroup[g.id] || [];
+                    html += `
+                        <div class="col-12">
+                            <div class="section-header">
+                                <h5 style="color: ${g.color};"><i class="fas fa-${g.icon} me-2"></i>${g.name}</h5>
+                                <span class="badge bg-secondary">${groupDoors.length} doors</span>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                ${groupDoors.map(d => `
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="door-card">
+                                            <div class="door-info">
+                                                <div class="door-icon" style="background: ${g.color}20; color: ${g.color};">
+                                                    <i class="fas fa-door-${d.is_locked ? 'closed' : 'open'}"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-medium">${d.name}</div>
+                                                    <small class="text-secondary">${d.location || 'No location'}</small>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="door-status ${d.status}"></div>
+                                                <button class="btn btn-unlock btn-sm" onclick="unlockDoor('${d.id}')">
+                                                    <i class="fas fa-unlock me-1"></i>Unlock
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('doors-container').innerHTML = html || '<p class="text-secondary text-center py-4">No doors configured</p>';
+            } catch (error) {
+                showToast('Failed to load doors', 'error');
+            }
+        }
+        
+        async function loadUsersPage() {
+            try {
+                const [usersData, groupsData, doorsData] = await Promise.all([
+                    fetch(`${API_BASE}/users`).then(r => r.json()),
+                    fetch(`${API_BASE}/groups`).then(r => r.json()),
+                    fetch(`${API_BASE}/doors`).then(r => r.json())
+                ]);
+                users = usersData;
+                groups = groupsData;
+                doors = doorsData;
+                
+                document.getElementById('users-container').innerHTML = `
+                    <div class="col-12"><div class="row g-3">
+                        ${users.map(u => {
+                            // Show door access instead of groups
+                            const doorAccess = (u.authorized_doors || []).map(doorId => {
+                                const door = doors.find(d => d.id === doorId);
+                                if (door) {
+                                    const building = groups.find(g => g.id === door.group_id);
+                                    return '<span class="badge me-1 mb-1" style="background: ' + (building?.color || '#667eea') + '20; color: ' + (building?.color || '#667eea') + ';"><i class="fas fa-door-open me-1"></i>' + door.name + '</span>';
+                                }
+                                return '';
+                            }).join('');
+                            
+                            return `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="user-avatar">${u.name.split(' ').map(n => n[0]).join('')}</div>
+                                            <div>
+                                                <div class="fw-medium">${u.name}</div>
+                                                <small class="text-secondary">${u.id} • ${u.department || 'No dept'}</small>
+                                            </div>
+                                        </div>
+                                        <span class="badge ${u.face_registered ? 'bg-success' : 'bg-warning'}">
+                                            ${u.face_registered ? 'Face Registered' : 'Pending'}
+                                        </span>
+                                    </div>
+                                    <div class="mb-3">
+                                        ${doorAccess || '<span class="text-secondary small">No door access assigned</span>'}
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-light btn-sm flex-grow-1" onclick="showAuthorizeModal('${u.id}', '${u.name}')">
+                                            <i class="fas fa-door-open me-1"></i>Door Access
+                                        </button>
+                                        <button class="btn btn-outline-light btn-sm" onclick="deleteUser('${u.id}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `}).join('')}
+                    </div></div>
+                `;
+            } catch (error) {
+                showToast('Failed to load users', 'error');
+            }
+        }
+        
+        async function loadAccessLogs() {
+            try {
+                const [logsData, groupsData] = await Promise.all([
+                    fetch(`${API_BASE}/access-logs?limit=100`).then(r => r.json()),
+                    fetch(`${API_BASE}/groups`).then(r => r.json())
+                ]);
+                accessLogs = logsData;
+                groups = groupsData;
+                
+                document.getElementById('log-filter-group').innerHTML = '<option value="">All Buildings</option>' + 
+                    groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+                
+                if (accessLogs.length === 0) {
+                    document.getElementById('logs-container').innerHTML = '<p class="text-secondary text-center py-4">No access logs found</p>';
+                    return;
+                }
+                document.getElementById('logs-container').innerHTML = accessLogs.map(log => `
+                    <div class="log-item">
+                        <div class="log-icon ${log.event_type}">
+                            <i class="fas fa-${log.event_type === 'granted' ? 'check' : log.event_type === 'denied' ? 'times' : 'door-open'}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-medium">${log.user_name || 'Unknown User'}</span>
+                                <span class="badge ${log.event_type === 'granted' ? 'bg-success' : 'bg-danger'}">${log.event_type}</span>
+                            </div>
+                            <small class="text-secondary">
+                                <i class="fas fa-door-open me-1"></i>${log.door_name || log.door_id}
+                                ${log.group_name ? `<span class="mx-2">•</span><i class="fas fa-building me-1"></i>${log.group_name}` : ''}
+                            </small>
+                            ${log.similarity_score ? `<small class="text-secondary d-block">Match score: ${(log.similarity_score * 100).toFixed(1)}%</small>` : ''}
+                        </div>
+                        <small class="text-secondary text-nowrap">${formatDateTime(log.timestamp)}</small>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast('Failed to load access logs', 'error');
+            }
+        }
+        
+        async function showGroupDetails(groupId) {
+            try {
+                const group = await fetch(`${API_BASE}/groups/${groupId}`).then(r => r.json());
+                document.getElementById('groupDetailName').textContent = group.name;
+                
+                document.getElementById('groupDoors').innerHTML = `
+                    <div class="row g-3">
+                        ${(group.doors_detail || []).map(d => `
+                            <div class="col-md-6">
+                                <div class="door-card">
+                                    <div class="door-info">
+                                        <div class="door-icon" style="background: ${group.color}20; color: ${group.color};">
+                                            <i class="fas fa-door-${d.is_locked ? 'closed' : 'open'}"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">${d.name}</div>
+                                            <small class="text-secondary">${d.location || d.ip_address || 'No details'}</small>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-unlock btn-sm" onclick="unlockDoor('${d.id}')">
+                                        <i class="fas fa-unlock me-1"></i>Unlock
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('') || '<p class="text-secondary">No doors in this building</p>'}
+                    </div>
+                `;
+                
+                document.getElementById('groupUsers').innerHTML = `
+                    <div class="row g-3">
+                        ${(group.users_detail || []).map(u => `
+                            <div class="col-md-6">
+                                <div class="door-card">
+                                    <div class="door-info">
+                                        <div class="user-avatar">${u.name.split(' ').map(n => n[0]).join('')}</div>
+                                        <div>
+                                            <div class="fw-medium">${u.name}</div>
+                                            <small class="text-secondary">${u.id} • ${u.department || 'No dept'}</small>
+                                        </div>
+                                    </div>
+                                    <span class="badge ${u.face_registered ? 'bg-success' : 'bg-warning'}">
+                                        ${u.face_registered ? 'Active' : 'Pending'}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('') || '<p class="text-secondary">No authorized users</p>'}
+                    </div>
+                `;
+                
+                new bootstrap.Modal(document.getElementById('groupDetailsModal')).show();
+            } catch (error) {
+                showToast('Failed to load building details', 'error');
+            }
+        }
+        
+        function showAddGroupModal() {
+            document.getElementById('addGroupForm').reset();
+            new bootstrap.Modal(document.getElementById('addGroupModal')).show();
+        }
+        
+        async function createGroup() {
+            const data = {
+                name: document.getElementById('groupName').value,
+                description: document.getElementById('groupDescription').value,
+                color: document.getElementById('groupColor').value,
+                icon: document.getElementById('groupIcon').value
+            };
+            try {
+                const response = await fetch(`${API_BASE}/groups`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    showToast('Building created successfully', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addGroupModal')).hide();
+                    loadDashboard();
+                } else throw new Error('Failed to create building');
+            } catch (error) {
+                showToast('Failed to create building', 'error');
+            }
+        }
+        
+        async function deleteGroup(groupId) {
+            if (!confirm('Are you sure you want to delete this building? All doors in this building will also be deleted.')) return;
+            try {
+                const response = await fetch(`${API_BASE}/groups/${groupId}`, {method: 'DELETE'});
+                if (response.ok) {
+                    showToast('Building deleted', 'success');
+                    loadGroupsPage();
+                } else throw new Error('Failed to delete building');
+            } catch (error) {
+                showToast('Failed to delete building', 'error');
+            }
+        }
+        
+        async function showAddDoorModal() {
+            document.getElementById('addDoorForm').reset();
+            document.getElementById('doorGroup').innerHTML = groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+            new bootstrap.Modal(document.getElementById('addDoorModal')).show();
+        }
+        
+        async function createDoor() {
+            const data = {
+                name: document.getElementById('doorName').value,
+                location: document.getElementById('doorLocation').value,
+                group_id: document.getElementById('doorGroup').value,
+                ip_address: document.getElementById('doorIP').value,
+                port: parseInt(document.getElementById('doorPort').value) || 80
+            };
+            try {
+                const response = await fetch(`${API_BASE}/doors`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    showToast('Door added successfully', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addDoorModal')).hide();
+                    loadDoorsPage();
+                } else throw new Error('Failed to add door');
+            } catch (error) {
+                showToast('Failed to add door', 'error');
+            }
+        }
+        
+        async function unlockDoor(doorId) {
+            try {
+                const response = await fetch(`${API_BASE}/doors/${doorId}/open`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({reason: 'manual_dashboard'})
+                });
+                const result = await response.json();
+                showToast(result.message, result.success ? 'success' : 'error');
+            } catch (error) {
+                showToast('Failed to unlock door', 'error');
+            }
+        }
+        
+        // Helper function to encode user IDs with slashes for URL paths
+        function encodeUserId(userId) {
+            return encodeURIComponent(userId);
+        }
+        
+        function showAddUserModal() {
+            document.getElementById('addUserForm').reset();
+            document.getElementById('employeeDetails').style.display = 'none';
+            document.getElementById('employeeVerified').value = 'false';
+            document.getElementById('addUserBtn').disabled = true;
+            document.getElementById('userName').value = '';
+            document.getElementById('userName').readOnly = true;
+            new bootstrap.Modal(document.getElementById('addUserModal')).show();
+        }
+        
+        async function verifyEmployee() {
+            const empId = document.getElementById('userId').value.trim();
+            if (!empId) {
+                showToast('Please enter an Employee ID', 'warning');
+                return;
+            }
+            
+            const verifyBtn = document.getElementById('verifyBtn');
+            const originalText = verifyBtn.innerHTML;
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            verifyBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/verify/${encodeUserId(empId)}`);
+                const result = await response.json();
+                
+                if (response.ok && result.exists) {
+                    document.getElementById('employeeDetails').style.display = 'block';
+                    document.getElementById('userName').value = result.name || 'Unknown';
+                    document.getElementById('verifyMessage').textContent = `Employee verified: ${result.name}`;
+                    document.getElementById('employeeVerified').value = 'true';
+                    document.getElementById('addUserBtn').disabled = false;
+                    showToast('Employee verified successfully!', 'success');
+                } else {
+                    document.getElementById('employeeDetails').style.display = 'none';
+                    document.getElementById('employeeVerified').value = 'false';
+                    document.getElementById('addUserBtn').disabled = true;
+                    showToast(result.message || 'Employee not found in central server. Please register first at the main Visage portal.', 'error');
+                }
+            } catch (error) {
+                document.getElementById('employeeDetails').style.display = 'none';
+                document.getElementById('employeeVerified').value = 'false';
+                document.getElementById('addUserBtn').disabled = true;
+                showToast('Error verifying employee. Please check the ID and try again.', 'error');
+            } finally {
+                verifyBtn.innerHTML = originalText;
+                verifyBtn.disabled = false;
+            }
+        }
+        
+        async function createUser() {
+            if (document.getElementById('employeeVerified').value !== 'true') {
+                showToast('Please verify the employee ID first', 'warning');
+                return;
+            }
+            
+            const data = {
+                id: document.getElementById('userId').value.trim(),
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                department: document.getElementById('userDepartment').value,
+                role: document.getElementById('userRole').value || 'employee'
+            };
+            try {
+                const response = await fetch(`${API_BASE}/users`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    showToast('Employee linked successfully', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+                    loadUsersPage();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to link employee');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+        
+        async function deleteUser(userId) {
+            if (!confirm('Are you sure you want to remove this employee from the access control system?')) return;
+            try {
+                const response = await fetch(`${API_BASE}/users/${encodeUserId(userId)}`, {method: 'DELETE'});
+                if (response.ok) {
+                    showToast('Employee removed', 'success');
+                    loadUsersPage();
+                } else throw new Error('Failed to remove employee');
+            } catch (error) {
+                showToast('Failed to remove employee', 'error');
+            }
+        }
+        
+        async function showAuthorizeModal(userId, userName) {
+            document.getElementById('authUserId').value = userId;
+            document.getElementById('authUserName').textContent = userName;
+            
+            // Fetch user's current door access
+            let userDoors = [];
+            try {
+                const userResponse = await fetch(`${API_BASE}/users/${encodeUserId(userId)}`);
+                if (userResponse.ok) {
+                    const userData = await userResponse.json();
+                    userDoors = userData.authorized_doors || [];
+                }
+            } catch (e) {
+                console.log('Could not fetch user doors');
+            }
+            
+            // Group doors by building
+            let html = '';
+            for (const g of groups) {
+                const groupDoors = doors.filter(d => d.group_id === g.id);
+                if (groupDoors.length === 0) continue;
+                
+                html += `
+                    <div class="mb-3">
+                        <h6 style="color: ${g.color};"><i class="fas fa-building me-2"></i>${g.name}</h6>
+                        ${groupDoors.map(d => `
+                            <div class="form-check mb-2 ms-3">
+                                <input class="form-check-input door-checkbox" type="checkbox" value="${d.id}" 
+                                       id="auth_door_${d.id}" ${userDoors.includes(d.id) ? 'checked' : ''}>
+                                <label class="form-check-label" for="auth_door_${d.id}">
+                                    <i class="fas fa-door-open me-1 text-secondary"></i>${d.name}
+                                    <small class="text-secondary ms-1">(${d.location || 'No location'})</small>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            document.getElementById('authDoorsList').innerHTML = html || '<p class="text-secondary">No doors available. Add doors to buildings first.</p>';
+            
+            new bootstrap.Modal(document.getElementById('authorizeUserModal')).show();
+        }
+        
+        async function saveUserAuthorization() {
+            const userId = document.getElementById('authUserId').value;
+            const selectedDoors = [];
+            document.querySelectorAll('#authDoorsList input.door-checkbox:checked').forEach(cb => selectedDoors.push(cb.value));
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/${encodeUserId(userId)}/authorize-doors`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_id: userId, door_ids: selectedDoors})
+                });
+                if (response.ok) {
+                    showToast('Door access updated', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('authorizeUserModal')).hide();
+                    loadUsersPage();
+                } else throw new Error('Failed to update door access');
+            } catch (error) {
+                showToast('Failed to update door access', 'error');
+            }
+        }
+        
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const diff = new Date() - date;
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
+            if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
+            return date.toLocaleDateString();
+        }
+        
+        function formatDateTime(timestamp) {
+            return new Date(timestamp).toLocaleString();
+        }
+        
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const id = 'toast_' + Date.now();
+            const bgClass = {success: 'bg-success', error: 'bg-danger', warning: 'bg-warning', info: 'bg-info'}[type] || 'bg-info';
+            
+            container.insertAdjacentHTML('beforeend', `
+                <div id="${id}" class="toast show" role="alert">
+                    <div class="toast-header ${bgClass} text-white">
+                        <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'}-circle me-2"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                </div>
+            `);
+            setTimeout(() => document.getElementById(id)?.remove(), 4000);
+        }
+    </script>
+</body>
+</html>

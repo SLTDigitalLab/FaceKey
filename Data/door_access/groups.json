@@ -1,0 +1,15 @@
+[
+  {
+    "id": "grp_a64dfc14",
+    "name": "A Building ",
+    "description": "",
+    "color": "#667eea",
+    "icon": "building",
+    "doors": [
+      "door_bda92fbd"
+    ],
+    "authorized_users": [],
+    "created_at": "2026-01-20T19:32:42.470834",
+    "updated_at": "2026-01-20T19:32:42.470834"
+  }
+]
