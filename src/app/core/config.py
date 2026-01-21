@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
+import configparser
 
 class Settings(BaseSettings):
     app_name: str = "Visage Edge Dashboard"
@@ -23,7 +24,26 @@ class Settings(BaseSettings):
     remote_api_longitude: float = 6.934846
     remote_api_latitude: float = 79.846843
     remote_api_timeout_seconds: int = 10
+    
+    # Validation settings from config.ini
+    validation_api_url: str = "https://visage.sltdigitallab.lk/api/username_val"
+    validation_api_user: str = "slt_interns"
+    validation_api_key: str = "26PytkCBcZ"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 settings = Settings()
+
+# Load config.ini overrides
+config = configparser.ConfigParser()
+config_path = os.path.join(os.getcwd(), 'config.ini')
+if os.path.exists(config_path):
+    config.read(config_path)
+    if 'API' in config:
+        if 'url' in config['API']:
+            settings.validation_api_url = config['API']['url']
+        if 'user' in config['API']:
+            settings.validation_api_user = config['API']['user']
+        if 'key' in config['API']:
+            settings.validation_api_key = config['API']['key']
+

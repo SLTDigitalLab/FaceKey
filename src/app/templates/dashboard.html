@@ -757,9 +757,13 @@
                                 <span id="verifyMessage">Employee verified successfully!</span>
                             </div>
                             <div class="row">
-                                <div class="col-12 mb-3">
-                                    <label class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" id="userName" readonly placeholder="Will be fetched from server">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="userFirstName" required placeholder="First Name">
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="userLastName" required placeholder="Last Name">
                                 </div>
                             </div>
                             <div class="row">
@@ -1286,8 +1290,7 @@
             document.getElementById('employeeDetails').style.display = 'none';
             document.getElementById('employeeVerified').value = 'false';
             document.getElementById('addUserBtn').disabled = true;
-            document.getElementById('userName').value = '';
-            document.getElementById('userName').readOnly = true;
+            // Removed userName reset as fields are new
             new bootstrap.Modal(document.getElementById('addUserModal')).show();
         }
         
@@ -1309,8 +1312,8 @@
                 
                 if (response.ok && result.exists) {
                     document.getElementById('employeeDetails').style.display = 'block';
-                    document.getElementById('userName').value = result.name || 'Unknown';
-                    document.getElementById('verifyMessage').textContent = `Employee verified: ${result.name}`;
+                    // Name is entered manually now
+                    document.getElementById('verifyMessage').textContent = `Employee ID Verified`;
                     document.getElementById('employeeVerified').value = 'true';
                     document.getElementById('addUserBtn').disabled = false;
                     showToast('Employee verified successfully!', 'success');
@@ -1337,9 +1340,17 @@
                 return;
             }
             
+            const firstName = document.getElementById('userFirstName').value.trim();
+            const lastName = document.getElementById('userLastName').value.trim();
+            
+            if (!firstName || !lastName) {
+                showToast('Please enter both First Name and Last Name', 'warning');
+                return;
+            }
+            
             const data = {
                 id: document.getElementById('userId').value.trim(),
-                name: document.getElementById('userName').value,
+                name: `${firstName} ${lastName}`,
                 email: document.getElementById('userEmail').value,
                 department: document.getElementById('userDepartment').value,
                 role: document.getElementById('userRole').value || 'employee'

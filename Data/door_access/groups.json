@@ -6,10 +6,24 @@
     "color": "#667eea",
     "icon": "building",
     "doors": [
-      "door_bda92fbd"
+      "door_bda92fbd",
+      "door_ff33537a"
     ],
     "authorized_users": [],
     "created_at": "2026-01-20T19:32:42.470834",
     "updated_at": "2026-01-20T19:32:42.470834"
+  },
+  {
+    "id": "grp_85c0b77b",
+    "name": "B Building",
+    "description": "",
+    "color": "#66eaa0",
+    "icon": "building",
+    "doors": [
+      "door_f480227a"
+    ],
+    "authorized_users": [],
+    "created_at": "2026-01-21T13:02:01.709915",
+    "updated_at": "2026-01-21T13:02:01.709915"
   }
 ]

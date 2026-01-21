@@ -315,8 +315,23 @@ class DoorAccessService:
         return self.users.get(user_id)
     
     def get_users_by_group(self, group_id: str) -> List[User]:
-        """Get all users authorized for a specific group."""
-        return [u for u in self.users.values() if group_id in u.authorized_groups]
+        """Get all users authorized for a specific group (direct or via doors)."""
+        # Get IDs of all doors in this group
+        group_door_ids = set(d.id for d in self.doors.values() if d.group_id == group_id)
+        
+        authorized_users = []
+        for u in self.users.values():
+            # Check if user is authorized for the group (Legacy)
+            if group_id in u.authorized_groups:
+                authorized_users.append(u)
+                continue
+                
+            # Check if user is authorized for ANY door in this group
+            if hasattr(u, 'authorized_doors') and u.authorized_doors:
+                if any(did in group_door_ids for did in u.authorized_doors):
+                    authorized_users.append(u)
+                    
+        return authorized_users
     
     def create_user(self, user_id: str, name: str, email: str = "", 
                    department: str = "", role: str = "employee") -> User:
@@ -326,7 +341,8 @@ class DoorAccessService:
             name=name,
             email=email,
             department=department,
-            role=role
+            role=role,
+            face_registered=True # Verified users always have face registered
         )
         self.users[user_id] = user
         self._save_users()

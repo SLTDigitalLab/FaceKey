@@ -39,7 +39,9 @@ async def get_all_groups():
     for g in groups:
         group_dict = g.model_dump(mode='json')
         group_dict['door_count'] = len(g.doors)
-        group_dict['user_count'] = len(g.authorized_users)
+        # Use service method to get accurate count including door-level authorization
+        users = service.get_users_by_group(g.id)
+        group_dict['user_count'] = len(users)
         result.append(group_dict)
     return result
 
@@ -204,50 +206,59 @@ async def verify_user_exists(user_id: str):
         # Use the remote API to check if user exists
         # We'll make a lightweight request to verify the employee
         headers = {
-            "api": settings.remote_api_api_key,
-            "user": settings.remote_api_username,
-            "empID": user_id
+            "api": settings.validation_api_key,
+            "user": settings.validation_api_user,
+            "uname": user_id
         }
         
         async with aiohttp.ClientSession() as session:
             # Try the attendance update endpoint as a way to verify if user exists
             async with session.post(
-                settings.remote_api_attendance_update_endpoint,
+                settings.validation_api_url,
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=5)
             ) as response:
                 if response.status == 200:
                     result = await response.json()
-                    # If the response indicates success, user exists
-                    if "success" in result.get("msg", "").lower() or result.get("msg", "").lower() != "user not found":
-                        # Extract name from user_id if format is "ID - Name"
-                        name = user_id
-                        if " - " in user_id:
-                            name = user_id.split(" - ")[-1].strip()
-                        
+                    msg = result.get("msg", "")
+                    
+                    # Check validation messages
+                    # "Username found" means the user is already registered -> Success for us (we want to add existing users)
+                    # "Username Available" means the user is NOT registered -> Fail for us
+                    
+                    if "Username found" in msg:
+                        # User verification success
                         return {
                             "exists": True,
-                            "name": name,
                             "message": "Employee verified successfully"
                         }
+                    elif "Username Available" in msg:
+                        return {
+                            "exists": False,
+                            "message": "Employee not found in central server. Please register first at the main Visage portal."
+                        }
+                    else:
+                        # Fallback for other messages
+                        logger.warning(f"Unexpected validation response: {msg}")
+                        return {
+                            "exists": False,
+                            "message": f"Verification failed: {msg}"
+                        }
                 
-                # User not found
+                # Server error
+                logger.error(f"Validation API returned status {response.status}")
                 return {
                     "exists": False,
-                    "message": "Employee not found in central server. Please register first."
+                    "message": f"Central server verification failed (Status {response.status})"
                 }
                 
     except Exception as e:
         logger.warning(f"Could not verify user against central server: {e}")
-        # If we can't reach central server, allow user to be added with extracted name
+        # If we can't reach central server, allow user to be added
         # This is a fallback for offline scenarios
-        name = user_id
-        if " - " in user_id:
-            name = user_id.split(" - ")[-1].strip()
         
         return {
             "exists": True,
-            "name": name,
             "message": "Offline mode - user accepted",
             "offline": True
         }

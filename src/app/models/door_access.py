@@ -53,7 +53,7 @@ class User(BaseModel):
     email: str = Field(default="", description="User email")
     department: str = Field(default="", description="Department")
     role: str = Field(default="employee", description="User role")
-    face_registered: bool = Field(default=False)
+    face_registered: bool = Field(default=True)
     is_active: bool = Field(default=True)
     authorized_groups: List[str] = Field(default_factory=list, description="Groups user can access (legacy)")
     authorized_doors: List[str] = Field(default_factory=list, description="Specific doors user can access")
