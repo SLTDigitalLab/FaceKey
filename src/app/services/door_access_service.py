@@ -169,14 +169,15 @@ class DoorAccessService:
         return group
     
     def delete_group(self, group_id: str) -> bool:
-        """Delete a group and reassign its doors."""
+        """Delete a group and its doors."""
         if group_id not in self.groups:
             return False
         
         # Remove doors from this group
-        for door_id in self.groups[group_id].doors:
-            if door_id in self.doors:
-                del self.doors[door_id]
+        # Create a copy of the list because delete_door modifies the group's door list
+        door_ids = list(self.groups[group_id].doors)
+        for door_id in door_ids:
+            self.delete_door(door_id)
         
         # Remove group from users' authorized_groups
         for user in self.users.values():
@@ -185,7 +186,6 @@ class DoorAccessService:
         
         del self.groups[group_id]
         self._save_groups()
-        self._save_doors()
         self._save_users()
         return True
     
@@ -256,8 +256,16 @@ class DoorAccessService:
         
         door = self.doors[door_id]
         if door.group_id in self.groups:
-            self.groups[door.group_id].doors.remove(door_id)
-            self._save_groups()
+            # Check if door is in the list before trying to remove it
+            if door_id in self.groups[door.group_id].doors:
+                self.groups[door.group_id].doors.remove(door_id)
+                self._save_groups()
+        
+        # Remove door from users' authorized_doors
+        for user in self.users.values():
+            if hasattr(user, 'authorized_doors') and door_id in user.authorized_doors:
+                user.authorized_doors.remove(door_id)
+        self._save_users()
         
         del self.doors[door_id]
         self._save_doors()
