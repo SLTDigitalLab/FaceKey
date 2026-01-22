@@ -799,8 +799,11 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-secondary mb-3">Select which doors <strong id="authUserName"></strong> can access</p>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="doorSearchInput" placeholder="Search doors..." onkeyup="filterAuthDoors()">
+                    </div>
                     <input type="hidden" id="authUserId">
-                    <div id="authDoorsList"></div>
+                    <div id="authDoorsList" style="max-height: 400px; overflow-y: auto;"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
@@ -1390,6 +1393,7 @@
         async function showAuthorizeModal(userId, userName) {
             document.getElementById('authUserId').value = userId;
             document.getElementById('authUserName').textContent = userName;
+            document.getElementById('doorSearchInput').value = '';
             
             // Fetch user's current door access
             let userDoors = [];
@@ -1410,10 +1414,10 @@
                 if (groupDoors.length === 0) continue;
                 
                 html += `
-                    <div class="mb-3">
+                    <div class="mb-3 building-section">
                         <h6 style="color: ${g.color};"><i class="fas fa-building me-2"></i>${g.name}</h6>
                         ${groupDoors.map(d => `
-                            <div class="form-check mb-2 ms-3">
+                            <div class="form-check mb-2 ms-3 door-item" data-search="${(d.name + ' ' + (d.location || '')).toLowerCase()}">
                                 <input class="form-check-input door-checkbox" type="checkbox" value="${d.id}" 
                                        id="auth_door_${d.id}" ${userDoors.includes(d.id) ? 'checked' : ''}>
                                 <label class="form-check-label" for="auth_door_${d.id}">
@@ -1429,6 +1433,23 @@
             document.getElementById('authDoorsList').innerHTML = html || '<p class="text-secondary">No doors available. Add doors to buildings first.</p>';
             
             new bootstrap.Modal(document.getElementById('authorizeUserModal')).show();
+        }
+
+        function filterAuthDoors() {
+            const searchText = document.getElementById('doorSearchInput').value.toLowerCase();
+            document.querySelectorAll('.building-section').forEach(section => {
+                let hasVisibleDoors = false;
+                section.querySelectorAll('.door-item').forEach(item => {
+                    const searchData = item.dataset.search;
+                    if (searchData.includes(searchText)) {
+                        item.style.display = 'block';
+                        hasVisibleDoors = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                section.style.display = hasVisibleDoors ? 'block' : 'none';
+            });
         }
         
         async function saveUserAuthorization() {
