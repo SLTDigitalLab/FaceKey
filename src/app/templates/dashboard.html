@@ -139,7 +139,7 @@
         
         /* Building Cards */
         .building-card,
-        .group-card {
+        .building-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
@@ -150,23 +150,23 @@
             overflow: hidden;
         }
         
-        .group-card::before {
+        .building-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             height: 4px;
-            background: var(--group-color, var(--primary-gradient));
+            background: var(--building-color, var(--primary-gradient));
         }
         
-        .group-card:hover {
+        .building-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-            border-color: var(--group-color, #667eea);
+            border-color: var(--building-color, #667eea);
         }
         
-        .group-card .group-icon {
+        .building-card .group-icon {
             width: 48px;
             height: 48px;
             border-radius: 12px;
@@ -177,13 +177,13 @@
             margin-bottom: 1rem;
         }
         
-        .group-card .group-name {
+        .building-card .group-name {
             font-weight: 600;
             font-size: 1.125rem;
             margin-bottom: 0.5rem;
         }
         
-        .group-card .group-stats {
+        .building-card .group-stats {
             display: flex;
             gap: 1rem;
             color: var(--text-secondary);
@@ -487,7 +487,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-page="groups">
+                <a class="nav-link" href="#" data-page="buildings">
                     <i class="fas fa-building"></i>
                     <span>Buildings</span>
                 </a>
@@ -537,7 +537,7 @@
                         <div class="icon-wrapper" style="background: var(--primary-gradient);">
                             <i class="fas fa-building text-white"></i>
                         </div>
-                        <div class="stat-value" id="stat-groups">-</div>
+                        <div class="stat-value" id="stat-buildings">-</div>
                         <div class="stat-label">Buildings</div>
                     </div>
                 </div>
@@ -575,11 +575,11 @@
                 <div class="col-lg-8">
                     <div class="section-header">
                         <h5><i class="fas fa-building me-2 text-primary"></i>Buildings</h5>
-                        <button class="btn btn-gradient btn-sm" onclick="showAddGroupModal()">
+                        <button class="btn btn-gradient btn-sm" onclick="showAddBuildingModal()">
                             <i class="fas fa-plus me-1"></i>Add Building
                         </button>
                     </div>
-                    <div class="row g-3" id="groups-container"></div>
+                    <div class="row g-3" id="buildings-container"></div>
                 </div>
 
                 <!-- Recent Activity -->
@@ -594,13 +594,13 @@
         </div>
 
         <!-- Buildings Page -->
-        <div id="page-groups" class="page-content" style="display: none;">
+        <div id="page-buildings" class="page-content" style="display: none;">
             <div class="page-header">
                 <div>
                     <h1>Buildings</h1>
                     <p class="text-secondary mb-0">Manage buildings and their doors</p>
                 </div>
-                <button class="btn btn-gradient" onclick="showAddGroupModal()">
+                <button class="btn btn-gradient" onclick="showAddBuildingModal()">
                     <i class="fas fa-plus me-2"></i>Add Building
                 </button>
             </div>
@@ -656,7 +656,7 @@
     </main>
 
     <!-- Add Building Modal -->
-    <div class="modal fade" id="addGroupModal" tabindex="-1">
+    <div class="modal fade" id="addBuildingModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -664,7 +664,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="addGroupForm">
+                    <form id="addBuildingForm">
                         <div class="mb-3">
                             <label class="form-label">Building Name</label>
                             <input type="text" class="form-control" id="groupName" required placeholder="e.g., A Building">
@@ -830,7 +830,7 @@
     </div>
 
     <!-- Building Details Modal -->
-    <div class="modal fade" id="groupDetailsModal" tabindex="-1">
+    <div class="modal fade" id="buildingDetailsModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -925,13 +925,13 @@
             try {
                 const [stats, groupsData, logsData] = await Promise.all([
                     fetch(`${API_BASE}/stats`).then(r => r.json()),
-                    fetch(`${API_BASE}/groups`).then(r => r.json()),
+                    fetch(`${API_BASE}/buildings`).then(r => r.json()),
                     fetch(`${API_BASE}/access-logs?limit=10`).then(r => r.json())
                 ]);
                 groups = groupsData;
                 accessLogs = logsData;
                 
-                document.getElementById('stat-groups').textContent = stats.total_groups;
+                document.getElementById('stat-buildings').textContent = stats.total_buildings;
                 document.getElementById('stat-doors').textContent = stats.total_doors;
                 document.getElementById('stat-users').textContent = stats.total_users;
                 document.getElementById('stat-today').textContent = stats.today_access_events;
@@ -945,9 +945,9 @@
         }
         
         function renderDashboardGroups() {
-            document.getElementById('groups-container').innerHTML = groups.map(g => `
+            document.getElementById('buildings-container').innerHTML = groups.map(g => `
                 <div class="col-md-6">
-                    <div class="group-card" style="--group-color: ${g.color};" onclick="showGroupDetails('${g.id}')">
+                    <div class="building-card" style="--building-color: ${g.color};" onclick="showBuildingDetails('${g.id}')">
                         <div class="group-icon" style="background: ${g.color}20; color: ${g.color};">
                             <i class="fas fa-${g.icon}"></i>
                         </div>
@@ -988,10 +988,10 @@
         
         async function loadGroupsPage() {
             try {
-                groups = await fetch(`${API_BASE}/groups`).then(r => r.json());
+                groups = await fetch(`${API_BASE}/buildings`).then(r => r.json());
                 document.getElementById('groups-full-container').innerHTML = groups.map(g => `
                     <div class="col-md-4">
-                        <div class="group-card" style="--group-color: ${g.color};">
+                        <div class="building-card" style="--building-color: ${g.color};">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div class="group-icon" style="background: ${g.color}20; color: ${g.color};">
                                     <i class="fas fa-${g.icon}"></i>
@@ -1004,7 +1004,7 @@
                                 <span><i class="fas fa-users me-1"></i>${g.user_count} users</span>
                             </div>
                             <div class="d-flex gap-2 mt-3">
-                                <button class="btn btn-gradient btn-sm flex-grow-1" onclick="showGroupDetails('${g.id}')">Manage Building</button>
+                                <button class="btn btn-gradient btn-sm flex-grow-1" onclick="showBuildingDetails('${g.id}')">Manage Building</button>
                                 <button class="btn btn-outline-light btn-sm" onclick="deleteGroup('${g.id}')" title="Delete Building">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -1021,15 +1021,15 @@
             try {
                 const [doorsData, groupsData] = await Promise.all([
                     fetch(`${API_BASE}/doors`).then(r => r.json()),
-                    fetch(`${API_BASE}/groups`).then(r => r.json())
+                    fetch(`${API_BASE}/buildings`).then(r => r.json())
                 ]);
                 doors = doorsData;
                 groups = groupsData;
                 
                 const doorsByGroup = {};
                 doors.forEach(d => {
-                    if (!doorsByGroup[d.group_id]) doorsByGroup[d.group_id] = [];
-                    doorsByGroup[d.group_id].push(d);
+                    if (!doorsByGroup[d.building_id]) doorsByGroup[d.building_id] = [];
+                    doorsByGroup[d.building_id].push(d);
                 });
                 
                 let html = '';
@@ -1080,7 +1080,7 @@
             try {
                 const [usersData, groupsData, doorsData] = await Promise.all([
                     fetch(`${API_BASE}/users`).then(r => r.json()),
-                    fetch(`${API_BASE}/groups`).then(r => r.json()),
+                    fetch(`${API_BASE}/buildings`).then(r => r.json()),
                     fetch(`${API_BASE}/doors`).then(r => r.json())
                 ]);
                 users = usersData;
@@ -1094,7 +1094,7 @@
                             const doorAccess = (u.authorized_doors || []).map(doorId => {
                                 const door = doors.find(d => d.id === doorId);
                                 if (door) {
-                                    const building = groups.find(g => g.id === door.group_id);
+                                    const building = groups.find(g => g.id === door.building_id);
                                     return '<span class="badge me-1 mb-1" style="background: ' + (building?.color || '#667eea') + '20; color: ' + (building?.color || '#667eea') + ';"><i class="fas fa-door-open me-1"></i>' + door.name + '</span>';
                                 }
                                 return '';
@@ -1140,7 +1140,7 @@
             try {
                 const [logsData, groupsData] = await Promise.all([
                     fetch(`${API_BASE}/access-logs?limit=100`).then(r => r.json()),
-                    fetch(`${API_BASE}/groups`).then(r => r.json())
+                    fetch(`${API_BASE}/buildings`).then(r => r.json())
                 ]);
                 accessLogs = logsData;
                 groups = groupsData;
@@ -1164,7 +1164,7 @@
                             </div>
                             <small class="text-secondary">
                                 <i class="fas fa-door-open me-1"></i>${log.door_name || log.door_id}
-                                ${log.group_name ? `<span class="mx-2">•</span><i class="fas fa-building me-1"></i>${log.group_name}` : ''}
+                                ${log.building_name ? `<span class="mx-2">•</span><i class="fas fa-building me-1"></i>${log.building_name}` : ''}
                             </small>
                             ${log.similarity_score ? `<small class="text-secondary d-block">Match score: ${(log.similarity_score * 100).toFixed(1)}%</small>` : ''}
                         </div>
@@ -1176,9 +1176,9 @@
             }
         }
         
-        async function showGroupDetails(groupId) {
+        async function showBuildingDetails(groupId) {
             try {
-                const group = await fetch(`${API_BASE}/groups/${groupId}`).then(r => r.json());
+                const group = await fetch(`${API_BASE}/buildings/${groupId}`).then(r => r.json());
                 document.getElementById('groupDetailName').textContent = group.name;
                 
                 document.getElementById('groupDoors').innerHTML = `
@@ -1225,15 +1225,15 @@
                     </div>
                 `;
                 
-                new bootstrap.Modal(document.getElementById('groupDetailsModal')).show();
+                new bootstrap.Modal(document.getElementById('buildingDetailsModal')).show();
             } catch (error) {
                 showToast('Failed to load building details', 'error');
             }
         }
         
-        function showAddGroupModal() {
-            document.getElementById('addGroupForm').reset();
-            new bootstrap.Modal(document.getElementById('addGroupModal')).show();
+        function showAddBuildingModal() {
+            document.getElementById('addBuildingForm').reset();
+            new bootstrap.Modal(document.getElementById('addBuildingModal')).show();
         }
         
         async function createGroup() {
@@ -1244,14 +1244,14 @@
                 icon: document.getElementById('groupIcon').value
             };
             try {
-                const response = await fetch(`${API_BASE}/groups`, {
+                const response = await fetch(`${API_BASE}/buildings`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
                 });
                 if (response.ok) {
                     showToast('Building created successfully', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('addGroupModal')).hide();
+                    bootstrap.Modal.getInstance(document.getElementById('addBuildingModal')).hide();
                     loadDashboard();
                 } else throw new Error('Failed to create building');
             } catch (error) {
@@ -1265,7 +1265,7 @@
                 'Are you sure you want to delete this building? All doors in this building will also be deleted.',
                 async () => {
                     try {
-                        const response = await fetch(`${API_BASE}/groups/${groupId}`, {method: 'DELETE'});
+                        const response = await fetch(`${API_BASE}/buildings/${groupId}`, {method: 'DELETE'});
                         if (response.ok) {
                             showToast('Building deleted', 'success');
                             loadGroupsPage();
@@ -1307,7 +1307,7 @@
             const data = {
                 name: document.getElementById('doorName').value,
                 location: document.getElementById('doorLocation').value,
-                group_id: document.getElementById('doorGroup').value,
+                building_id: document.getElementById('doorGroup').value,
                 ip_address: document.getElementById('doorIP').value,
                 port: parseInt(document.getElementById('doorPort').value) || 80
             };
@@ -1474,7 +1474,7 @@
             // Group doors by building
             let html = '';
             for (const g of groups) {
-                const groupDoors = doors.filter(d => d.group_id === g.id);
+                const groupDoors = doors.filter(d => d.building_id === g.id);
                 if (groupDoors.length === 0) continue;
                 
                 html += `

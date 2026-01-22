@@ -38,7 +38,7 @@ class Door(BaseModel):
     port: int = Field(default=80, description="Door controller port")
     status: DoorStatus = Field(default=DoorStatus.ONLINE)
     is_locked: bool = Field(default=True)
-    group_id: str = Field(..., description="Group this door belongs to")
+    building_id: str = Field(..., description="Building this door belongs to")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     
@@ -55,7 +55,6 @@ class User(BaseModel):
     role: str = Field(default="employee", description="User role")
     face_registered: bool = Field(default=True)
     is_active: bool = Field(default=True)
-    authorized_groups: List[str] = Field(default_factory=list, description="Groups user can access (legacy)")
     authorized_doors: List[str] = Field(default_factory=list, description="Specific doors user can access")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
@@ -64,15 +63,14 @@ class User(BaseModel):
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
-class Group(BaseModel):
-    """Represents a group containing multiple doors and authorized users."""
-    id: str = Field(..., description="Unique group identifier")
-    name: str = Field(..., description="Group display name")
-    description: str = Field(default="", description="Group description")
-    color: str = Field(default="#667eea", description="UI color for the group")
+class Building(BaseModel):
+    """Represents a building containing multiple doors."""
+    id: str = Field(..., description="Unique building identifier")
+    name: str = Field(..., description="Building display name")
+    description: str = Field(default="", description="Building description")
+    color: str = Field(default="#667eea", description="UI color for the building")
     icon: str = Field(default="building", description="FontAwesome icon name")
-    doors: List[str] = Field(default_factory=list, description="Door IDs in this group")
-    authorized_users: List[str] = Field(default_factory=list, description="User IDs authorized for this group")
+    doors: List[str] = Field(default_factory=list, description="Door IDs in this building")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     
@@ -89,7 +87,7 @@ class AccessLog(BaseModel):
     user_name: Optional[str] = Field(default=None, description="User display name")
     event_type: AccessLogType = Field(..., description="Type of access event")
     similarity_score: Optional[float] = Field(default=None, description="Face match score")
-    group_id: Optional[str] = Field(default=None, description="Group context")
+    building_id: Optional[str] = Field(default=None, description="Building context")
     details: str = Field(default="", description="Additional details")
     
     class Config:
@@ -103,8 +101,8 @@ class DoorOpenRequest(BaseModel):
     reason: str = "manual"
 
 
-class GroupCreate(BaseModel):
-    """Request to create a new group."""
+class BuildingCreate(BaseModel):
+    """Request to create a new building."""
     name: str
     description: str = ""
     color: str = "#667eea"
@@ -117,7 +115,7 @@ class DoorCreate(BaseModel):
     location: str = ""
     ip_address: str = ""
     port: int = 80
-    group_id: str
+    building_id: str
 
 
 class UserCreate(BaseModel):
@@ -127,12 +125,6 @@ class UserCreate(BaseModel):
     email: str = ""
     department: str = ""
     role: str = "employee"
-
-
-class AuthorizationUpdate(BaseModel):
-    """Request to update user authorization for groups."""
-    user_id: str
-    group_ids: List[str]
 
 
 class DoorAuthorizationUpdate(BaseModel):
