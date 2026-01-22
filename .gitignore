@@ -2,6 +2,7 @@ __pycache__/
 .pytest_cache/
 .vscode/
 .venv/
+venv/
 .venv-test/
 coverage_report/
 *.coverage
