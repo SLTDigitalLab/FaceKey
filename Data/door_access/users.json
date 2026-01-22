@@ -14,5 +14,18 @@
     ],
     "created_at": "2026-01-21T13:10:59.821263",
     "updated_at": "2026-01-21T13:16:19.374855"
+  },
+  {
+    "id": "InSP/2025/0002/002",
+    "name": "Bhanuka Aththanayaka",
+    "email": "bhanukan@slt.com.lk",
+    "department": "Digital Lab",
+    "role": "employee",
+    "face_registered": true,
+    "is_active": true,
+    "authorized_groups": [],
+    "authorized_doors": [],
+    "created_at": "2026-01-22T10:32:02.845969",
+    "updated_at": "2026-01-22T10:32:02.845969"
   }
 ]

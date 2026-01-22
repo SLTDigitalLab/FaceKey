@@ -41,3 +41,10 @@
 2026-01-21 13:15:58,298 - root - INFO - Logger initialized
 2026-01-21 13:16:04,755 - src.app.services.door_access_service - INFO - Door Access Service initialized
 2026-01-21 13:16:19,375 - src.app.services.door_access_service - INFO - Updated door access for user InSP/2025/4593/526 - Inam: 2 doors
+2026-01-22 10:29:04,688 - root - INFO - Logger initialized
+2026-01-22 10:29:10,783 - src.app.services.door_access_service - INFO - Door Access Service initialized
+2026-01-22 10:31:10,792 - src.app.api.v1.door_access - INFO - Verifying employee ID: InSP/2025/0002/002
+2026-01-22 10:32:02,858 - src.app.services.door_access_service - INFO - Created user: Bhanuka Aththanayaka (InSP/2025/0002/002)
+2026-01-22 10:44:27,739 - root - INFO - Logger initialized
+2026-01-22 10:44:28,286 - src.app.services.door_access_service - INFO - Door Access Service initialized
+2026-01-22 10:47:23,756 - src.app.api.v1.door_access - INFO - Verifying employee ID: InSP/2025/4593/526 - Inam
