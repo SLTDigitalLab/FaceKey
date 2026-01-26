@@ -72,7 +72,7 @@ function AddBuildingModal({ show, onHide, onSubmit }) {
                                                 value={formData.color}
                                                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                                             />
-                                            <div 
+                                            <div
                                                 className="color-preview"
                                                 style={{ background: formData.color }}
                                                 onClick={() => setShowColorPicker(!showColorPicker)}
