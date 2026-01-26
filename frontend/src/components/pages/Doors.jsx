@@ -87,7 +87,7 @@ function Doors({ showToast }) {
             <div className="page-header-custom">
                 <div>
                     <h1 className="page-title">Doors</h1>
-                    <p className="page-subtitle">Manage door access and controls</p>
+                    <p className="page-subtitle">Manage physical doors and user access permissions</p>
                 </div>
                 <button className="btn btn-gradient" onClick={() => setShowAddModal(true)}>
                     <i className="fas fa-plus me-2"></i>Add Door
@@ -98,24 +98,21 @@ function Doors({ showToast }) {
                 <p className="text-secondary text-center py-4">No doors configured</p>
             ) : (
                 groupedDoors.map(({ group, doors: groupDoors }) => (
-                    <div key={group.id} className="mb-4">
-                        <div className="building-header mb-3">
-                            <div className="d-flex align-items-center gap-2">
-                                <i className="fas fa-building building-icon" style={{ color: group.color || '#667eea' }}></i>
-                                <h5 className="mb-0" style={{ color: group.color || '#667eea' }}>{group.name}</h5>
-                            </div>
-                            <span className="door-count-badge">{groupDoors.length} door{groupDoors.length !== 1 ? 's' : ''}</span>
+                    <div key={group.id} className="mb-5">
+                        <div className="building-section-header">
+                            <h3 className="building-section-title" style={{ color: group.color || '#667eea' }}>{group.name}</h3>
+                            <span className="building-section-count">{groupDoors.length} door{groupDoors.length !== 1 ? 's' : ''}</span>
                         </div>
-                        <div className="row g-3">
+                        <div className="doors-grid">
                             {groupDoors.map(door => (
-                                <div key={door.id} className="col-md-6">
-                                    <DoorCard
-                                        door={door}
-                                        groupName={group.name}
-                                        onUnlock={handleUnlock}
-                                        onDelete={handleDeleteDoor}
-                                    />
-                                </div>
+                                <DoorCard
+                                    key={door.id}
+                                    door={door}
+                                    groupName={group.name}
+                                    groupColor={group.color || '#667eea'}
+                                    onUnlock={handleUnlock}
+                                    onDelete={handleDeleteDoor}
+                                />
                             ))}
                         </div>
                     </div>

@@ -1,30 +1,32 @@
 import React from 'react'
 
-function DoorCard({ door, groupName, onUnlock, onDelete }) {
+function DoorCard({ door, groupName, groupColor, onUnlock, onDelete }) {
     const statusClass = door.is_locked ? 'locked' : 'online';
 
     return (
-        <div className="door-card">
-            <div className="door-info">
-                <div className="door-icon" style={{ background: 'rgba(102, 126, 234, 0.2)' }}>
-                    <i className="fas fa-door-closed" style={{ color: '#667eea' }}></i>
+        <div className="door-card-new">
+            <div className="door-info-new">
+                <div className="door-icon-new" style={{ backgroundColor: `${groupColor}33` }}>
+                    <i className="fas fa-door-closed" style={{ color: groupColor }}></i>
                 </div>
                 <div>
-                    <div className="fw-semibold">{door.name}</div>
-                    <div className="small text-secondary">{door.location || groupName}</div>
+                    <div className="door-name">{door.name}</div>
+                    <div className="door-location">{door.location || 'No location'}</div>
                 </div>
             </div>
-            <div className="d-flex align-items-center gap-2">
-                <div className={`door-status ${statusClass}`}></div>
+            <div className="door-actions">
+                <div className={`door-status-indicator ${statusClass}`}></div>
                 <button
-                    className="btn btn-unlock btn-sm"
+                    className="door-action-btn unlock-btn"
                     onClick={() => onUnlock(door.id)}
+                    title="Unlock door"
                 >
-                    <i className="fas fa-lock-open"></i>
+                    <i className="fas fa-unlock"></i>
                 </button>
                 <button
-                    className="btn btn-delete btn-sm"
+                    className="door-action-btn delete-btn"
                     onClick={() => onDelete(door.id, door.name)}
+                    title="Delete door"
                 >
                     <i className="fas fa-trash"></i>
                 </button>
