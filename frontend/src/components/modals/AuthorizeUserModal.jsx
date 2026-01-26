@@ -101,8 +101,16 @@ function AuthorizeUserModal({
                   filteredGroups.map(({ group, doors: groupDoors }) => (
                     <div key={group.id} className="mb-4">
                       <div className="d-flex align-items-center mb-3">
-                        <i className="fas fa-building me-2" style={{ color: group.color || '#667eea' }}></i>
-                        <h6 className="mb-0" style={{ color: group.color || '#667eea' }}>{group.name}</h6>
+                        <i
+                          className="fas fa-building me-2"
+                          style={{ color: group.color || "#667eea" }}
+                        ></i>
+                        <h6
+                          className="mb-0"
+                          style={{ color: group.color || "#667eea" }}
+                        >
+                          {group.name}
+                        </h6>
                       </div>
                       <div className="ms-4">
                         {groupDoors.map((door) => (
@@ -118,7 +126,10 @@ function AuthorizeUserModal({
                               className="form-check-label d-flex align-items-center text-white"
                               htmlFor={`door-${door.id}`}
                             >
-                              <i className="fas fa-door-closed me-2" style={{ color: group.color || '#667eea' }}></i>
+                              <i
+                                className="fas fa-door-closed me-2"
+                                style={{ color: group.color || "#667eea" }}
+                              ></i>
                               <span>{door.name}</span>
                               {door.location && (
                                 <span className="text-secondary ms-1">
