@@ -3,9 +3,15 @@ import { api } from '../../services/api'
 
 function AddUserModal({ show, onHide, onSubmit, showToast }) {
     const [formData, setFormData] = useState({
-        user_id: ''
+        user_id: '',
+        first_name: '',
+        last_name: '',
+        department: '',
+        email: ''
     });
     const [isVerifying, setIsVerifying] = useState(false);
+    const [isVerified, setIsVerified] = useState(false);
+    const [employeeData, setEmployeeData] = useState(null);
 
     const handleVerify = async () => {
         if (!formData.user_id.trim()) {
@@ -17,12 +23,28 @@ function AddUserModal({ show, onHide, onSubmit, showToast }) {
         try {
             const result = await api.verifyEmployee(formData.user_id);
             if (result.exists) {
-                showToast('Employee verified successfully', 'success');
+                setIsVerified(true);
+                setEmployeeData(result.data);
+                // Update form data with employee name if available
+                if (result.data?.name) {
+                    const nameParts = result.data.name.split(' ');
+                    setFormData({
+                        ...formData,
+                        user_id: `${formData.user_id} - ${result.data.name}`,
+                        first_name: nameParts[0] || '',
+                        last_name: nameParts.slice(1).join(' ') || '',
+                        department: result.data.department || '',
+                        email: result.data.email || ''
+                    });
+                }
+                showToast('Employee verified successfully!', 'success');
             } else {
                 showToast('Employee ID not found in system', 'error');
+                setIsVerified(false);
             }
         } catch (error) {
             showToast('Error verifying employee. Please check the ID and try again.', 'error');
+            setIsVerified(false);
         } finally {
             setIsVerifying(false);
         }
@@ -34,12 +56,24 @@ function AddUserModal({ show, onHide, onSubmit, showToast }) {
             showToast('Please enter an Employee ID', 'warning');
             return;
         }
+        if (!isVerified) {
+            showToast('Please verify the Employee ID first', 'warning');
+            return;
+        }
         onSubmit(formData);
-        setFormData({ user_id: '' });
+        handleClose();
     };
 
     const handleClose = () => {
-        setFormData({ user_id: '' });
+        setFormData({ 
+            user_id: '',
+            first_name: '',
+            last_name: '',
+            department: '',
+            email: ''
+        });
+        setIsVerified(false);
+        setEmployeeData(null);
         onHide();
     };
 
@@ -72,12 +106,13 @@ function AddUserModal({ show, onHide, onSubmit, showToast }) {
                                             value={formData.user_id}
                                             onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
                                             required
+                                            disabled={isVerified}
                                         />
                                         <button
                                             type="button"
                                             className="btn btn-outline-light"
                                             onClick={handleVerify}
-                                            disabled={isVerifying}
+                                            disabled={isVerifying || isVerified}
                                         >
                                             {isVerifying ? (
                                                 <i className="fas fa-spinner fa-spin"></i>
@@ -89,9 +124,64 @@ function AddUserModal({ show, onHide, onSubmit, showToast }) {
                                         </button>
                                     </div>
                                     <small className="form-text text-muted">
-                                        Format: InSPYYYY/XXXX/XXX or InSPYYYY/XXXX/XXX - Name
+                                        Format: InSP/YYYY/XXXX/XXX or InSP/YYYY/XXXX/XXX - Name
                                     </small>
                                 </div>
+
+                                {isVerified && (
+                                    <>
+                                        <div className="alert alert-success mb-3">
+                                            <i className="fas fa-check-circle me-2"></i>
+                                            Employee ID Verified
+                                        </div>
+                                        
+                                        <div className="row">
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">First Name</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="First Name"
+                                                    value={formData.first_name}
+                                                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">Last Name</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="Last Name"
+                                                    value={formData.last_name}
+                                                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="row">
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">Department</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="Department"
+                                                    value={formData.department}
+                                                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">Email (Optional)</label>
+                                                <input
+                                                    type="email"
+                                                    className="form-control"
+                                                    placeholder="email@company.com"
+                                                    value={formData.email}
+                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-outline-light" onClick={handleClose}>

@@ -36,7 +36,7 @@ function AuthorizeUserModal({ show, user, groups, doors, onHide, onSubmit, showT
     const filteredGroups = groups.map(group => ({
         group,
         doors: doors.filter(door =>
-            door.group_id === group.id &&
+            door.building_id === group.id &&
             door.name.toLowerCase().includes(searchTerm.toLowerCase())
         )
     })).filter(item => item.doors.length > 0);
@@ -50,11 +50,15 @@ function AuthorizeUserModal({ show, user, groups, doors, onHide, onSubmit, showT
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">
-                                <i className="fas fa-key me-2"></i>Authorize Doors - {user.name}
+                                <i className="fas fa-key me-2"></i>Manage Door Access
                             </h5>
                             <button type="button" className="btn-close btn-close-white" onClick={onHide}></button>
                         </div>
                         <div className="modal-body">
+                            <p className="text-secondary mb-3">
+                                Select which doors <strong>{user?.name || user?.id}</strong> can access
+                            </p>
+                            
                             <div className="mb-3">
                                 <input
                                     type="text"
@@ -67,26 +71,32 @@ function AuthorizeUserModal({ show, user, groups, doors, onHide, onSubmit, showT
 
                             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                 {filteredGroups.length === 0 ? (
-                                    <p className="text-secondary">No doors available. Add doors to buildings first.</p>
+                                    <div className="text-center py-4">
+                                        <i className="fas fa-door-open fa-3x text-secondary mb-3"></i>
+                                        <p className="text-secondary">No doors available. Add doors to buildings first.</p>
+                                    </div>
                                 ) : (
                                     filteredGroups.map(({ group, doors: groupDoors }) => (
-                                        <div key={group.id} className="building-section">
-                                            <h6 className="mb-3">{group.name}</h6>
-                                            <div className="row g-2 mb-3">
+                                        <div key={group.id} className="mb-4">
+                                            <div className="d-flex align-items-center mb-3">
+                                                <i className="fas fa-building text-primary me-2"></i>
+                                                <h6 className="mb-0">{group.name}</h6>
+                                            </div>
+                                            <div className="ms-4">
                                                 {groupDoors.map(door => (
-                                                    <div key={door.id} className="col-md-6">
-                                                        <div className="form-check">
-                                                            <input
-                                                                className="form-check-input door-checkbox"
-                                                                type="checkbox"
-                                                                id={`door-${door.id}`}
-                                                                checked={selectedDoors.includes(door.id)}
-                                                                onChange={() => handleToggleDoor(door.id)}
-                                                            />
-                                                            <label className="form-check-label" htmlFor={`door-${door.id}`}>
-                                                                {door.name}
-                                                            </label>
-                                                        </div>
+                                                    <div key={door.id} className="form-check mb-2">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id={`door-${door.id}`}
+                                                            checked={selectedDoors.includes(door.id)}
+                                                            onChange={() => handleToggleDoor(door.id)}
+                                                        />
+                                                        <label className="form-check-label d-flex align-items-center" htmlFor={`door-${door.id}`}>
+                                                            <i className="fas fa-door-closed me-2 text-secondary"></i>
+                                                            <span>{door.name}</span>
+                                                            {door.location && <span className="text-secondary ms-2">({door.location})</span>}
+                                                        </label>
                                                     </div>
                                                 ))}
                                             </div>
@@ -100,7 +110,7 @@ function AuthorizeUserModal({ show, user, groups, doors, onHide, onSubmit, showT
                                 Cancel
                             </button>
                             <button type="button" className="btn btn-gradient" onClick={handleSubmit}>
-                                <i className="fas fa-save me-2"></i>Save Authorization
+                                Save Permissions
                             </button>
                         </div>
                     </div>

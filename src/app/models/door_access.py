@@ -129,5 +129,4 @@ class UserCreate(BaseModel):
 
 class DoorAuthorizationUpdate(BaseModel):
     """Request to update user authorization for specific doors."""
-    user_id: str
     door_ids: List[str]
