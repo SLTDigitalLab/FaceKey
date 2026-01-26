@@ -90,6 +90,14 @@ function Users({ showToast }) {
         }
     };
 
+    // Get user's authorized doors with names
+    const getUserAuthorizedDoors = (user) => {
+        if (!user.authorized_doors || user.authorized_doors.length === 0) return [];
+        return user.authorized_doors
+            .map(doorId => doors.find(d => d.id === doorId))
+            .filter(door => door !== undefined);
+    };
+
     return (
         <div>
             <div className="page-header-custom">
@@ -103,37 +111,59 @@ function Users({ showToast }) {
             </div>
 
             <div className="row g-3">
-                {users.map(user => (
-                    <div key={user.user_id} className="col-12">
-                        <div className="stat-card">
-                            <div className="d-flex align-items-center justify-content-between">
-                                <div className="d-flex align-items-center gap-3">
-                                    <div className="user-avatar">
+                {users.map(user => {
+                    const authorizedDoors = getUserAuthorizedDoors(user);
+                    return (
+                        <div key={user.user_id} className="col-lg-4">
+                            <div className="employee-card">
+                                <div className="employee-card-header">
+                                    <div className="employee-avatar">
                                         {user.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                                     </div>
-                                    <div>
-                                        <div className="fw-semibold">{user.name}</div>
-                                        <div className="small text-secondary">ID: {user.id}</div>
+                                    <div className="employee-info">
+                                        <div className="employee-name-row">
+                                            <h3 className="employee-name">{user.name}</h3>
+                                            {user.face_registered && (
+                                                <span className="badge-face-registered">Face Registered</span>
+                                            )}
+                                        </div>
+                                        <div className="employee-id">{user.id}</div>
+                                        {authorizedDoors.length > 0 && (
+                                            <div className="employee-doors-info">
+                                                • {authorizedDoors.map(d => d.name).join(', ')}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="d-flex gap-2">
+                                
+                                {authorizedDoors.length > 0 && (
+                                    <div className="employee-door-badges">
+                                        {authorizedDoors.map(door => (
+                                            <span key={door.id} className="door-badge">
+                                                <i className="fas fa-door-closed me-1"></i>{door.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="employee-card-footer">
                                     <button
-                                        className="btn btn-gradient btn-sm"
+                                        className="btn-door-access"
                                         onClick={() => handleAuthorizeUser(user)}
                                     >
-                                        <i className="fas fa-key me-1"></i>Authorize Doors
+                                        <i className="fas fa-door-closed me-2"></i>Door Access
                                     </button>
                                     <button
-                                        className="btn btn-gradient-danger btn-sm"
+                                        className="btn-delete-user"
                                         onClick={() => handleDeleteUser(user.id, user.name)}
                                     >
-                                        <i className="fas fa-trash me-1"></i>Delete
+                                        <i className="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <AddUserModal
