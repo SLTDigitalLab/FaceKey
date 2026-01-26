@@ -500,15 +500,64 @@ body {
     background: var(--success-gradient);
     border: none;
     color: white;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 8px;
     font-weight: 500;
     font-size: 0.875rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-unlock:hover {
     box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
     color: white;
+    transform: translateY(-2px);
+}
+
+.btn-delete {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-delete:hover {
+    background: rgba(235, 51, 73, 0.1);
+    border-color: #eb3349;
+    color: #eb3349;
+    transform: translateY(-2px);
+}
+
+.building-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.building-icon {
+    font-size: 1.25rem;
+}
+
+.door-count-badge {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 /* Section Headers */

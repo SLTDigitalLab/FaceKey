@@ -62,7 +62,8 @@ function Doors({ showToast }) {
         setConfirmModal({
             show: true,
             title: 'Delete Door',
-            message: `Are you sure you want to delete "${doorName}"? This action cannot be undone.`,
+            message: 'Are you sure you want to delete this door?',
+            confirmText: 'Start Deletion',
             onConfirm: async () => {
                 try {
                     await api.deleteDoor(doorId);
@@ -98,7 +99,13 @@ function Doors({ showToast }) {
             ) : (
                 groupedDoors.map(({ group, doors: groupDoors }) => (
                     <div key={group.id} className="mb-4">
-                        <h5 className="mb-3">{group.name}</h5>
+                        <div className="building-header mb-3">
+                            <div className="d-flex align-items-center gap-2">
+                                <i className="fas fa-building building-icon" style={{ color: group.color || '#667eea' }}></i>
+                                <h5 className="mb-0" style={{ color: group.color || '#667eea' }}>{group.name}</h5>
+                            </div>
+                            <span className="door-count-badge">{groupDoors.length} door{groupDoors.length !== 1 ? 's' : ''}</span>
+                        </div>
                         <div className="row g-3">
                             {groupDoors.map(door => (
                                 <div key={door.id} className="col-md-6">
@@ -106,6 +113,7 @@ function Doors({ showToast }) {
                                         door={door}
                                         groupName={group.name}
                                         onUnlock={handleUnlock}
+                                        onDelete={handleDeleteDoor}
                                     />
                                 </div>
                             ))}
@@ -125,6 +133,7 @@ function Doors({ showToast }) {
                 show={confirmModal.show}
                 title={confirmModal.title}
                 message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
                 onHide={() => setConfirmModal({ ...confirmModal, show: false })}
                 onConfirm={confirmModal.onConfirm}
             />
