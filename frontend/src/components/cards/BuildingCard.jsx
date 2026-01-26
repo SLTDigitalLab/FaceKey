@@ -1,6 +1,6 @@
 import React from 'react'
 
-function BuildingCard({ group, onManage, onDelete, userCount, doorCount, color }) {
+function BuildingCard({ group, onManage, onDelete, onClick, userCount, doorCount, color }) {
     const colorMap = {
         0: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         1: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
@@ -9,11 +9,13 @@ function BuildingCard({ group, onManage, onDelete, userCount, doorCount, color }
     };
 
     const iconBg = colorMap[color] || colorMap[0];
+    const showFooter = onManage || onDelete;
 
     return (
         <div
             className="building-card-new"
-            style={{ '--building-color': iconBg }}
+            style={{ '--building-color': iconBg, cursor: onClick ? 'pointer' : 'default' }}
+            onClick={onClick}
         >
             <div className="building-card-header">
                 <div className="group-icon" style={{ background: iconBg }}>
@@ -34,14 +36,20 @@ function BuildingCard({ group, onManage, onDelete, userCount, doorCount, color }
                     </span>
                 </div>
             </div>
-            <div className="building-card-footer">
-                <button className="btn-manage-building" onClick={onManage}>
-                    Manage Building
-                </button>
-                <button className="btn-delete-building" onClick={onDelete}>
-                    <i className="fas fa-trash"></i>
-                </button>
-            </div>
+            {showFooter && (
+                <div className="building-card-footer">
+                    {onManage && (
+                        <button className="btn-manage-building" onClick={(e) => { e.stopPropagation(); onManage(); }}>
+                            Manage Building
+                        </button>
+                    )}
+                    {onDelete && (
+                        <button className="btn-delete-building" onClick={(e) => { e.stopPropagation(); onDelete(e); }}>
+                            <i className="fas fa-trash"></i>
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

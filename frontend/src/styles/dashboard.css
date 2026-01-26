@@ -442,10 +442,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: rgba(102, 126, 234, 0.15);
+    color: #667eea;
+    font-size: 1.2rem;
 }
-
-.log-icon.granted { background: rgba(56, 239, 125, 0.2); color: #38ef7d; }
-.log-icon.denied { background: rgba(235, 51, 73, 0.2); color: #eb3349; }
 
 /* Buttons */
 .btn-gradient {

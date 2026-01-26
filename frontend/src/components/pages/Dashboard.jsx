@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../../services/api'
 import PageHeader from '../layout/PageHeader'
 import StatCard from '../cards/StatCard'
@@ -141,6 +142,8 @@ function Dashboard({ showToast }) {
                                     <BuildingCard
                                         group={group}
                                         onClick={() => handleBuildingClick(group)}
+                                        userCount={group.user_count || 0}
+                                        doorCount={group.door_count || 0}
                                         color={idx % 4}
                                     />
                                 </div>
@@ -152,7 +155,7 @@ function Dashboard({ showToast }) {
                 <div className="col-lg-5">
                     <div className="section-header">
                         <h5><i className="fas fa-clock me-2"></i>Recent Activity</h5>
-                        <a href="#/logs" className="view-all-link">View All</a>
+                        <Link to="/logs" className="view-all-link">View All</Link>
                     </div>
                     <div className="activity-container">
                         {accessLogs.length === 0 ? (
