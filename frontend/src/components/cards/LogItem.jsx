@@ -15,7 +15,7 @@ function LogItem({ log }) {
     };
 
     const getEventBadgeClass = (eventType) => {
-        switch(eventType) {
+        switch (eventType) {
             case 'granted':
             case 'face_recognition':
                 return 'bg-success';
