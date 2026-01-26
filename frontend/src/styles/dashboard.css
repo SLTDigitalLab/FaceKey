@@ -766,6 +766,10 @@ body {
     padding: 1.25rem 1.5rem;
 }
 
+.modal-title {
+    color: var(--text-primary);
+}
+
 .modal-body { padding: 1.5rem; }
 
 .modal-footer {
