@@ -53,7 +53,7 @@ function BuildingDetailsModal({ group, doors, show, onHide, onDelete, showToast 
                 <div className="modal-dialog modal-lg modal-dialog-centered">
                     <div className="modal-content building-details-modal">
                         <div className="modal-header">
-                            <h5 className="modal-title">
+                            <h5 className="modal-title text-white">
                                 <i className="fas fa-building me-2"></i>{group.name}
                             </h5>
                             <button type="button" className="btn-close btn-close-white" onClick={onHide}></button>
@@ -65,7 +65,7 @@ function BuildingDetailsModal({ group, doors, show, onHide, onDelete, showToast 
                                 className={`tab-button ${activeTab === 'doors' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('doors')}
                             >
-                                <i className="fas fa-door-open me-2"></i>Doors
+                                <i className="fas fa-door-closed me-2"></i>Doors
                             </button>
                             <button
                                 className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
@@ -90,23 +90,23 @@ function BuildingDetailsModal({ group, doors, show, onHide, onDelete, showToast 
                                             {buildingDoors.length === 0 ? (
                                                 <p className="text-secondary text-center py-4">No doors configured for this building.</p>
                                             ) : (
-                                                <div className="doors-list">
+                                                <div className="doors-grid">
                                                     {buildingDoors.map(door => (
-                                                        <div key={door.id} className="door-item">
-                                                            <div className="door-item-icon">
+                                                        <div key={door.id} className="door-card-modal">
+                                                            <div className="door-card-icon">
                                                                 <i className="fas fa-door-closed"></i>
                                                             </div>
-                                                            <div className="door-item-info">
-                                                                <div className="door-item-name">{door.name}</div>
-                                                                <div className="door-item-details">
-                                                                    {door.location || 'No details'}
+                                                            <div className="door-card-info">
+                                                                <div className="door-card-name">{door.name}</div>
+                                                                <div className="door-card-location">
+                                                                    {door.location || 'No location'}
                                                                 </div>
                                                             </div>
                                                             <button
                                                                 className="btn-unlock"
                                                                 onClick={() => handleUnlockDoor(door.id, door.name)}
                                                             >
-                                                                <i className="fas fa-unlock me-2"></i>Unlock
+                                                                <i className="fas fa-unlock me-1"></i>Unlock
                                                             </button>
                                                         </div>
                                                     ))}
@@ -123,21 +123,18 @@ function BuildingDetailsModal({ group, doors, show, onHide, onDelete, showToast 
                                             ) : (
                                                 <div className="users-list">
                                                     {authorizedUsers.map(user => (
-                                                        <div key={user.id} className="user-item">
-                                                            <div className="user-item-icon">
-                                                                <i className="fas fa-user"></i>
+                                                        <div key={user.id} className="user-item-card">
+                                                            <div className="user-item-avatar">
+                                                                {user.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                                                             </div>
                                                             <div className="user-item-info">
                                                                 <div className="user-item-name">{user.name}</div>
                                                                 <div className="user-item-details">
-                                                                    {user.email || user.id}
+                                                                    {user.id} {user.department ? `• ${user.department}` : ''}
                                                                 </div>
                                                             </div>
-                                                            <div className="user-item-badge">
-                                                                <i className="fas fa-check-circle me-1"></i>
-                                                                {user.authorized_doors?.filter(doorId =>
-                                                                    buildingDoors.some(d => d.id === doorId)
-                                                                ).length || 0} doors
+                                                            <div className="user-item-badge-active">
+                                                                Active
                                                             </div>
                                                         </div>
                                                     ))}
