@@ -102,7 +102,7 @@ function Dashboard({ showToast }) {
                         icon="fas fa-door-open"
                         value={doors.length}
                         label="Total Doors"
-                        gradient="linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                        gradient="linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
                     />
                 </div>
                 <div className="col-md-3">
@@ -110,7 +110,7 @@ function Dashboard({ showToast }) {
                         icon="fas fa-users"
                         value={users.length}
                         label="Linked Employees"
-                        gradient="linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                        gradient="linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
                     />
                 </div>
                 <div className="col-md-3">
@@ -124,7 +124,7 @@ function Dashboard({ showToast }) {
             </div>
 
             <div className="row g-4">
-                <div className="col-lg-7">
+                <div className="col-lg-8">
                     <div className="section-header">
                         <h5><i className="fas fa-building me-2"></i>Buildings</h5>
                         <button className="btn btn-gradient btn-sm" onClick={() => setShowAddModal(true)}>
@@ -137,14 +137,13 @@ function Dashboard({ showToast }) {
                         </div>
                     ) : (
                         <div className="row g-3">
-                            {groups.slice(0, 6).map((group, idx) => (
-                                <div key={group.id} className="col-md-6 col-lg-4">
+                            {groups.slice(0, 6).map((group) => (
+                                <div key={group.id} className="col-md-6">
                                     <BuildingCard
                                         group={group}
                                         onClick={() => handleBuildingClick(group)}
                                         userCount={group.user_count || 0}
                                         doorCount={group.door_count || 0}
-                                        color={idx % 4}
                                     />
                                 </div>
                             ))}
@@ -152,7 +151,7 @@ function Dashboard({ showToast }) {
                     )}
                 </div>
 
-                <div className="col-lg-5">
+                <div className="col-lg-4">
                     <div className="section-header">
                         <h5><i className="fas fa-clock me-2"></i>Recent Activity</h5>
                         <Link to="/logs" className="view-all-link">View All</Link>

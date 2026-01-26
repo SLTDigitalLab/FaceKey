@@ -1,14 +1,8 @@
 import React from 'react'
 
-function BuildingCard({ group, onManage, onDelete, onClick, userCount, doorCount, color }) {
-    const colorMap = {
-        0: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        1: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-        2: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        3: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    };
-
-    const iconBg = colorMap[color] || colorMap[0];
+function BuildingCard({ group, onManage, onDelete, onClick, userCount, doorCount }) {
+    // Use the color from the group object, fallback to purple gradient
+    const iconBg = group.color || '#667eea';
     const showFooter = onManage || onDelete;
 
     return (

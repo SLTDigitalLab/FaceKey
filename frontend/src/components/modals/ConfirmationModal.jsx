@@ -6,23 +6,23 @@ function ConfirmationModal({ show, title, message, onHide, onConfirm, confirmTex
     return (
         <>
             <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
-                <div className="modal-dialog modal-dialog-centered modal-sm">
-                    <div className="modal-content confirmation-modal">
-                        <div className="confirmation-header">
-                            <div className="confirmation-icon">
-                                <i className="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <h5 className="confirmation-title">{title}</h5>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title d-flex align-items-center gap-2 text-white">
+                                <i className="fas fa-exclamation-triangle" style={{ color: '#ffc107' }}></i>
+                                {title}
+                            </h5>
                             <button type="button" className="btn-close btn-close-white" onClick={onHide}></button>
                         </div>
-                        <div className="confirmation-body">
-                            <p className="confirmation-message">{message}</p>
+                        <div className="modal-body">
+                            <p className="text-secondary mb-0">{message}</p>
                         </div>
-                        <div className="confirmation-footer">
-                            <button type="button" className="btn-cancel" onClick={onHide}>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-outline-light" onClick={onHide}>
                                 Cancel
                             </button>
-                            <button type="button" className={`btn-confirm btn-confirm-${type}`} onClick={onConfirm}>
+                            <button type="button" className={`btn btn-${type}`} onClick={onConfirm}>
                                 {confirmText}
                             </button>
                         </div>

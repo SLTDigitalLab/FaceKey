@@ -106,15 +106,14 @@ function Buildings({ showToast }) {
             </div>
 
             <div className="row g-4">
-                {groups.map((group, idx) => (
-                    <div key={group.id} className="col-md-6 col-lg-4 col-xl-3">
+                {groups.map((group) => (
+                    <div key={group.id} className="col-md-6 col-lg-4">
                         <BuildingCard
                             group={group}
                             onManage={() => handleBuildingClick(group)}
                             onDelete={(e) => handleDeleteClick(e, group)}
                             userCount={getUserCountForBuilding(group.id)}
                             doorCount={group.doors?.length || 0}
-                            color={idx % 4}
                         />
                     </div>
                 ))}
