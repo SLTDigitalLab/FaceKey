@@ -19,7 +19,7 @@ function BuildingDetailsModal({ group, doors, show, onHide, onDelete, showToast 
             // Get building details with doors and users
             const response = await fetch(`/api/v1/door-access/buildings/${group.id}`);
             const data = await response.json();
-            
+
             setBuildingDoors(data.doors_detail || []);
             setAuthorizedUsers(data.users_detail || []);
         } catch (error) {
@@ -58,16 +58,16 @@ function BuildingDetailsModal({ group, doors, show, onHide, onDelete, showToast 
                             </h5>
                             <button type="button" className="btn-close btn-close-white" onClick={onHide}></button>
                         </div>
-                        
+
                         {/* Tabs Navigation */}
                         <div className="building-tabs">
-                            <button 
+                            <button
                                 className={`tab-button ${activeTab === 'doors' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('doors')}
                             >
                                 <i className="fas fa-door-open me-2"></i>Doors
                             </button>
-                            <button 
+                            <button
                                 className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('users')}
                             >
@@ -102,7 +102,7 @@ function BuildingDetailsModal({ group, doors, show, onHide, onDelete, showToast 
                                                                     {door.location || 'No details'}
                                                                 </div>
                                                             </div>
-                                                            <button 
+                                                            <button
                                                                 className="btn-unlock"
                                                                 onClick={() => handleUnlockDoor(door.id, door.name)}
                                                             >
@@ -135,7 +135,7 @@ function BuildingDetailsModal({ group, doors, show, onHide, onDelete, showToast 
                                                             </div>
                                                             <div className="user-item-badge">
                                                                 <i className="fas fa-check-circle me-1"></i>
-                                                                {user.authorized_doors?.filter(doorId => 
+                                                                {user.authorized_doors?.filter(doorId =>
                                                                     buildingDoors.some(d => d.id === doorId)
                                                                 ).length || 0} doors
                                                             </div>

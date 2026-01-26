@@ -83,7 +83,7 @@ function Buildings({ showToast }) {
         const buildingDoorIds = doors
             .filter(door => door.building_id === buildingId)
             .map(door => door.id);
-        
+
         const uniqueUsers = new Set();
         users.forEach(user => {
             if (user.authorized_doors && user.authorized_doors.some(doorId => buildingDoorIds.includes(doorId))) {
