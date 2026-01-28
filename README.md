@@ -18,4 +18,4 @@ This is a standalone dashboard for the Visage Edge Building Access Control syste
 
 ## Data
 
-All data is stored in JSON files in the `Data/door_access/` directory.
+All data is stored in JSON files in the `Data/door_access/` .
