@@ -9,9 +9,9 @@ from typing import List, Optional
 import logging
 
 from src.app.models.door_access import (
-    Door, User, Group, AccessLog, 
-    GroupCreate, DoorCreate, UserCreate, 
-    AuthorizationUpdate, DoorAuthorizationUpdate, DoorOpenRequest
+    Door, User, Building, AccessLog, 
+    BuildingCreate, DoorCreate, UserCreate, 
+    DoorAuthorizationUpdate, DoorOpenRequest
 )
 from src.app.services.door_access_service import get_door_access_service
 
@@ -28,92 +28,92 @@ async def get_dashboard_stats():
     return service.get_dashboard_stats()
 
 
-# ==================== Groups ====================
+# ==================== Buildings ====================
 
-@router.get("/groups", response_model=List[dict])
-async def get_all_groups():
-    """Get all groups with door and user counts."""
+@router.get("/buildings", response_model=List[dict])
+async def get_all_buildings():
+    """Get all buildings with door and user counts."""
     service = get_door_access_service()
-    groups = service.get_all_groups()
+    buildings = service.get_all_buildings()
     result = []
-    for g in groups:
-        group_dict = g.model_dump(mode='json')
-        group_dict['door_count'] = len(g.doors)
+    for b in buildings:
+        building_dict = b.model_dump(mode='json')
+        building_dict['door_count'] = len(b.doors)
         # Use service method to get accurate count including door-level authorization
-        users = service.get_users_by_group(g.id)
-        group_dict['user_count'] = len(users)
-        result.append(group_dict)
+        users = service.get_users_by_building(b.id)
+        building_dict['user_count'] = len(users)
+        result.append(building_dict)
     return result
 
 
-@router.get("/groups/{group_id}")
-async def get_group(group_id: str):
-    """Get a specific group by ID."""
+@router.get("/buildings/{building_id}")
+async def get_building(building_id: str):
+    """Get a specific building by ID."""
     service = get_door_access_service()
-    group = service.get_group(group_id)
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
+    building = service.get_building(building_id)
+    if not building:
+        raise HTTPException(status_code=404, detail="Building not found")
     
     # Get full door and user details
-    doors = service.get_doors_by_group(group_id)
-    users = service.get_users_by_group(group_id)
+    doors = service.get_doors_by_building(building_id)
+    users = service.get_users_by_building(building_id)
     
     return {
-        **group.model_dump(mode='json'),
+        **building.model_dump(mode='json'),
         "doors_detail": [d.model_dump(mode='json') for d in doors],
         "users_detail": [u.model_dump(mode='json') for u in users]
     }
 
 
-@router.post("/groups")
-async def create_group(group_data: GroupCreate):
-    """Create a new group."""
+@router.post("/buildings")
+async def create_building(building_data: BuildingCreate):
+    """Create a new building."""
     service = get_door_access_service()
-    group = service.create_group(
-        name=group_data.name,
-        description=group_data.description,
-        color=group_data.color,
-        icon=group_data.icon
+    building = service.create_building(
+        name=building_data.name,
+        description=building_data.description,
+        color=building_data.color,
+        icon=building_data.icon
     )
-    return {"success": True, "group": group.model_dump(mode='json')}
+    return {"success": True, "building": building.model_dump(mode='json')}
 
 
-@router.put("/groups/{group_id}")
-async def update_group(group_id: str, group_data: dict):
-    """Update an existing group."""
+@router.put("/buildings/{building_id}")
+async def update_building(building_id: str, building_data: dict):
+    """Update an existing building."""
     service = get_door_access_service()
-    group = service.update_group(group_id, **group_data)
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
-    return {"success": True, "group": group.model_dump(mode='json')}
+    building = service.update_building(building_id, **building_data)
+    if not building:
+        raise HTTPException(status_code=404, detail="Building not found")
+    return {"success": True, "building": building.model_dump(mode='json')}
 
 
-@router.delete("/groups/{group_id}")
-async def delete_group(group_id: str):
-    """Delete a group."""
+@router.delete("/buildings/{building_id}")
+async def delete_building(building_id: str):
+    """Delete a building."""
     service = get_door_access_service()
-    if service.delete_group(group_id):
-        return {"success": True, "message": "Group deleted"}
-    raise HTTPException(status_code=404, detail="Group not found")
+    if service.delete_building(building_id):
+        return {"success": True, "message": "Building deleted"}
+    raise HTTPException(status_code=404, detail="Building not found")
 
 
 # ==================== Doors ====================
 
 @router.get("/doors", response_model=List[dict])
-async def get_all_doors(group_id: Optional[str] = None):
-    """Get all doors, optionally filtered by group."""
+async def get_all_doors(building_id: Optional[str] = None):
+    """Get all doors, optionally filtered by building."""
     service = get_door_access_service()
-    if group_id:
-        doors = service.get_doors_by_group(group_id)
+    if building_id:
+        doors = service.get_doors_by_building(building_id)
     else:
         doors = service.get_all_doors()
     
     result = []
     for d in doors:
         door_dict = d.model_dump(mode='json')
-        # Add group name
-        group = service.get_group(d.group_id)
-        door_dict['group_name'] = group.name if group else "Unknown"
+        # Add building name
+        building = service.get_building(d.building_id)
+        door_dict['building_name'] = building.name if building else "Unknown"
         result.append(door_dict)
     return result
 
@@ -127,9 +127,9 @@ async def get_door(door_id: str):
         raise HTTPException(status_code=404, detail="Door not found")
     
     door_dict = door.model_dump(mode='json')
-    group = service.get_group(door.group_id)
-    door_dict['group_name'] = group.name if group else "Unknown"
-    door_dict['group_color'] = group.color if group else "#667eea"
+    building = service.get_building(door.building_id)
+    door_dict['building_name'] = building.name if building else "Unknown"
+    door_dict['building_color'] = building.color if building else "#667eea"
     return door_dict
 
 
@@ -139,13 +139,13 @@ async def create_door(door_data: DoorCreate):
     service = get_door_access_service()
     door = service.create_door(
         name=door_data.name,
-        group_id=door_data.group_id,
+        building_id=door_data.building_id,
         location=door_data.location,
         ip_address=door_data.ip_address,
         port=door_data.port
     )
     if not door:
-        raise HTTPException(status_code=400, detail="Invalid group ID")
+        raise HTTPException(status_code=400, detail="Invalid building ID")
     return {"success": True, "door": door.model_dump(mode='json')}
 
 
@@ -265,27 +265,17 @@ async def verify_user_exists(user_id: str):
 
 
 @router.get("/users", response_model=List[dict])
-async def get_all_users(group_id: Optional[str] = None):
-    """Get all users, optionally filtered by group."""
+async def get_all_users(building_id: Optional[str] = None):
+    """Get all users, optionally filtered by building."""
     service = get_door_access_service()
-    if group_id:
-        users = service.get_users_by_group(group_id)
+    if building_id:
+        users = service.get_users_by_building(building_id)
     else:
         users = service.get_all_users()
     
     result = []
     for u in users:
         user_dict = u.model_dump(mode='json')
-        # Add group details
-        user_dict['groups_detail'] = []
-        for gid in u.authorized_groups:
-            group = service.get_group(gid)
-            if group:
-                user_dict['groups_detail'].append({
-                    'id': group.id,
-                    'name': group.name,
-                    'color': group.color
-                })
         result.append(user_dict)
     return result
 
@@ -299,16 +289,6 @@ async def get_user(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     
     user_dict = user.model_dump(mode='json')
-    user_dict['groups_detail'] = []
-    for gid in user.authorized_groups:
-        group = service.get_group(gid)
-        if group:
-            user_dict['groups_detail'].append({
-                'id': group.id,
-                'name': group.name,
-                'color': group.color,
-                'icon': group.icon
-            })
     # Ensure authorized_doors is included
     if 'authorized_doors' not in user_dict:
         user_dict['authorized_doors'] = []
@@ -350,15 +330,6 @@ async def delete_user(user_id: str):
     service = get_door_access_service()
     if service.delete_user(user_id):
         return {"success": True, "message": "User deleted"}
-    raise HTTPException(status_code=404, detail="User not found")
-
-
-@router.post("/users/{user_id:path}/authorize")
-async def authorize_user(user_id: str, auth_data: AuthorizationUpdate):
-    """Update user's authorized groups (legacy)."""
-    service = get_door_access_service()
-    if service.authorize_user_for_groups(user_id, auth_data.group_ids):
-        return {"success": True, "message": "Authorization updated"}
     raise HTTPException(status_code=404, detail="User not found")
 
 
@@ -406,24 +377,24 @@ async def get_access_logs(
     limit: int = Query(100, ge=1, le=1000),
     door_id: Optional[str] = None,
     user_id: Optional[str] = None,
-    group_id: Optional[str] = None
+    building_id: Optional[str] = None
 ):
     """Get access logs with optional filters."""
     service = get_door_access_service()
     logs = service.get_access_logs(limit=limit, door_id=door_id, 
-                                   user_id=user_id, group_id=group_id)
+                                   user_id=user_id, building_id=building_id)
     
     result = []
     for log in logs:
         log_dict = log.model_dump(mode='json')
-        # Add door and group names
+        # Add door and building names
         door = service.get_door(log.door_id)
         if door:
             log_dict['door_name'] = door.name
             log_dict['door_location'] = door.location
-        group = service.get_group(log.group_id) if log.group_id else None
-        if group:
-            log_dict['group_name'] = group.name
-            log_dict['group_color'] = group.color
+        building = service.get_building(log.building_id) if log.building_id else None
+        if building:
+            log_dict['building_name'] = building.name
+            log_dict['building_color'] = building.color
         result.append(log_dict)
     return result

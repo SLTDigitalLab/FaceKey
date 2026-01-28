@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Any
 from threading import Lock
 
 from src.app.models.door_access import (
-    Door, User, Group, AccessLog, DoorStatus, AccessLogType
+    Door, User, Building, AccessLog, DoorStatus, AccessLogType
 )
 
 logger = logging.getLogger(__name__)
@@ -41,12 +41,12 @@ class DoorAccessService:
         self.data_dir = "Data/door_access"
         os.makedirs(self.data_dir, exist_ok=True)
         
-        self.groups_file = os.path.join(self.data_dir, "groups.json")
+        self.buildings_file = os.path.join(self.data_dir, "buildings.json")
         self.doors_file = os.path.join(self.data_dir, "doors.json")
         self.users_file = os.path.join(self.data_dir, "users.json")
         self.access_logs_file = os.path.join(self.data_dir, "access_logs.json")
         
-        self.groups: Dict[str, Group] = {}
+        self.buildings: Dict[str, Building] = {}
         self.doors: Dict[str, Door] = {}
         self.users: Dict[str, User] = {}
         self.access_logs: List[AccessLog] = []
@@ -58,14 +58,14 @@ class DoorAccessService:
     
     def _load_data(self):
         """Load all data from JSON files."""
-        # Load groups
-        if os.path.exists(self.groups_file):
+        # Load buildings
+        if os.path.exists(self.buildings_file):
             try:
-                with open(self.groups_file, 'r') as f:
+                with open(self.buildings_file, 'r') as f:
                     data = json.load(f)
-                    self.groups = {g['id']: Group(**g) for g in data}
+                    self.buildings = {b['id']: Building(**b) for b in data}
             except Exception as e:
-                logger.error(f"Error loading groups: {e}")
+                logger.error(f"Error loading buildings: {e}")
         
         # Load doors
         if os.path.exists(self.doors_file):
@@ -82,9 +82,12 @@ class DoorAccessService:
                 with open(self.users_file, 'r') as f:
                     data = json.load(f)
                     for u in data:
-                        # Ensure authorized_doors field exists for backward compatibility
+                        # Ensure authorized_doors field exists
                         if 'authorized_doors' not in u:
                             u['authorized_doors'] = []
+                        # Remove legacy authorized_groups if present in data but not in model
+                        if 'authorized_groups' in u:
+                            del u['authorized_groups']
                         self.users[u['id']] = User(**u)
             except Exception as e:
                 logger.error(f"Error loading users: {e}")
@@ -98,13 +101,13 @@ class DoorAccessService:
             except Exception as e:
                 logger.error(f"Error loading access logs: {e}")
     
-    def _save_groups(self):
-        """Save groups to JSON file."""
+    def _save_buildings(self):
+        """Save buildings to JSON file."""
         try:
-            with open(self.groups_file, 'w') as f:
-                json.dump([g.model_dump(mode='json') for g in self.groups.values()], f, indent=2, default=str)
+            with open(self.buildings_file, 'w') as f:
+                json.dump([b.model_dump(mode='json') for b in self.buildings.values()], f, indent=2, default=str)
         except Exception as e:
-            logger.error(f"Error saving groups: {e}")
+            logger.error(f"Error saving buildings: {e}")
     
     def _save_doors(self):
         """Save doors to JSON file."""
@@ -130,63 +133,57 @@ class DoorAccessService:
         except Exception as e:
             logger.error(f"Error saving access logs: {e}")
     
-    # ==================== Group Operations ====================
+    # ==================== Building Operations ====================
     
-    def get_all_groups(self) -> List[Group]:
-        """Get all groups with their door and user counts."""
-        return list(self.groups.values())
+    def get_all_buildings(self) -> List[Building]:
+        """Get all buildings with their door and user counts."""
+        return list(self.buildings.values())
     
-    def get_group(self, group_id: str) -> Optional[Group]:
-        """Get a specific group by ID."""
-        return self.groups.get(group_id)
+    def get_building(self, building_id: str) -> Optional[Building]:
+        """Get a specific building by ID."""
+        return self.buildings.get(building_id)
     
-    def create_group(self, name: str, description: str = "", color: str = "#667eea", icon: str = "building") -> Group:
-        """Create a new group."""
-        group_id = f"grp_{uuid.uuid4().hex[:8]}"
-        group = Group(
-            id=group_id,
+    def create_building(self, name: str, description: str = "", color: str = "#667eea", icon: str = "building") -> Building:
+        """Create a new building."""
+        building_id = f"bld_{uuid.uuid4().hex[:8]}"
+        building = Building(
+            id=building_id,
             name=name,
             description=description,
             color=color,
             icon=icon
         )
-        self.groups[group_id] = group
-        self._save_groups()
-        logger.info(f"Created group: {name} ({group_id})")
-        return group
+        self.buildings[building_id] = building
+        self._save_buildings()
+        logger.info(f"Created building: {name} ({building_id})")
+        return building
     
-    def update_group(self, group_id: str, **kwargs) -> Optional[Group]:
-        """Update an existing group."""
-        if group_id not in self.groups:
+    def update_building(self, building_id: str, **kwargs) -> Optional[Building]:
+        """Update an existing building."""
+        if building_id not in self.buildings:
             return None
         
-        group = self.groups[group_id]
+        building = self.buildings[building_id]
         for key, value in kwargs.items():
-            if hasattr(group, key) and key not in ['id', 'created_at']:
-                setattr(group, key, value)
-        group.updated_at = datetime.now()
-        self._save_groups()
-        return group
+            if hasattr(building, key) and key not in ['id', 'created_at']:
+                setattr(building, key, value)
+        building.updated_at = datetime.now()
+        self._save_buildings()
+        return building
     
-    def delete_group(self, group_id: str) -> bool:
-        """Delete a group and reassign its doors."""
-        if group_id not in self.groups:
+    def delete_building(self, building_id: str) -> bool:
+        """Delete a building and its doors."""
+        if building_id not in self.buildings:
             return False
         
-        # Remove doors from this group
-        for door_id in self.groups[group_id].doors:
-            if door_id in self.doors:
-                del self.doors[door_id]
+        # Remove doors from this building
+        # Create a copy of the list because delete_door modifies the building's door list
+        door_ids = list(self.buildings[building_id].doors)
+        for door_id in door_ids:
+            self.delete_door(door_id)
         
-        # Remove group from users' authorized_groups
-        for user in self.users.values():
-            if group_id in user.authorized_groups:
-                user.authorized_groups.remove(group_id)
-        
-        del self.groups[group_id]
-        self._save_groups()
-        self._save_doors()
-        self._save_users()
+        del self.buildings[building_id]
+        self._save_buildings()
         return True
     
     # ==================== Door Operations ====================
@@ -199,14 +196,14 @@ class DoorAccessService:
         """Get a specific door by ID."""
         return self.doors.get(door_id)
     
-    def get_doors_by_group(self, group_id: str) -> List[Door]:
-        """Get all doors in a specific group."""
-        return [d for d in self.doors.values() if d.group_id == group_id]
+    def get_doors_by_building(self, building_id: str) -> List[Door]:
+        """Get all doors in a specific building."""
+        return [d for d in self.doors.values() if d.building_id == building_id]
     
-    def create_door(self, name: str, group_id: str, location: str = "", 
+    def create_door(self, name: str, building_id: str, location: str = "", 
                    ip_address: str = "", port: int = 80) -> Optional[Door]:
-        """Create a new door in a group."""
-        if group_id not in self.groups:
+        """Create a new door in a building."""
+        if building_id not in self.buildings:
             return None
         
         door_id = f"door_{uuid.uuid4().hex[:8]}"
@@ -216,13 +213,13 @@ class DoorAccessService:
             location=location,
             ip_address=ip_address,
             port=port,
-            group_id=group_id
+            building_id=building_id
         )
         self.doors[door_id] = door
-        self.groups[group_id].doors.append(door_id)
+        self.buildings[building_id].doors.append(door_id)
         self._save_doors()
-        self._save_groups()
-        logger.info(f"Created door: {name} ({door_id}) in group {group_id}")
+        self._save_buildings()
+        logger.info(f"Created door: {name} ({door_id}) in building {building_id}")
         return door
     
     def update_door(self, door_id: str, **kwargs) -> Optional[Door]:
@@ -231,19 +228,19 @@ class DoorAccessService:
             return None
         
         door = self.doors[door_id]
-        old_group_id = door.group_id
+        old_building_id = door.building_id
         
         for key, value in kwargs.items():
             if hasattr(door, key) and key not in ['id', 'created_at']:
                 setattr(door, key, value)
         
-        # Handle group change
-        if 'group_id' in kwargs and kwargs['group_id'] != old_group_id:
-            if old_group_id in self.groups:
-                self.groups[old_group_id].doors.remove(door_id)
-            if door.group_id in self.groups:
-                self.groups[door.group_id].doors.append(door_id)
-            self._save_groups()
+        # Handle building change
+        if 'building_id' in kwargs and kwargs['building_id'] != old_building_id:
+            if old_building_id in self.buildings:
+                self.buildings[old_building_id].doors.remove(door_id)
+            if door.building_id in self.buildings:
+                self.buildings[door.building_id].doors.append(door_id)
+            self._save_buildings()
         
         door.updated_at = datetime.now()
         self._save_doors()
@@ -255,9 +252,17 @@ class DoorAccessService:
             return False
         
         door = self.doors[door_id]
-        if door.group_id in self.groups:
-            self.groups[door.group_id].doors.remove(door_id)
-            self._save_groups()
+        if door.building_id in self.buildings:
+            # Check if door is in the list before trying to remove it
+            if door_id in self.buildings[door.building_id].doors:
+                self.buildings[door.building_id].doors.remove(door_id)
+                self._save_buildings()
+        
+        # Remove door from users' authorized_doors
+        for user in self.users.values():
+            if hasattr(user, 'authorized_doors') and door_id in user.authorized_doors:
+                user.authorized_doors.remove(door_id)
+        self._save_users()
         
         del self.doors[door_id]
         self._save_doors()
@@ -278,7 +283,7 @@ class DoorAccessService:
             user_id=user_id,
             user_name=self.users[user_id].name if user_id and user_id in self.users else None,
             event_type=AccessLogType.GRANTED if user_id else AccessLogType.MANUAL_UNLOCK,
-            group_id=door.group_id,
+            building_id=door.building_id,
             details=f"Door opened: {reason}"
         )
         self.access_logs.append(log_entry)
@@ -314,21 +319,16 @@ class DoorAccessService:
         """Get a specific user by ID."""
         return self.users.get(user_id)
     
-    def get_users_by_group(self, group_id: str) -> List[User]:
-        """Get all users authorized for a specific group (direct or via doors)."""
-        # Get IDs of all doors in this group
-        group_door_ids = set(d.id for d in self.doors.values() if d.group_id == group_id)
+    def get_users_by_building(self, building_id: str) -> List[User]:
+        """Get all users authorized for a specific building (via doors)."""
+        # Get IDs of all doors in this building
+        building_door_ids = set(d.id for d in self.doors.values() if d.building_id == building_id)
         
         authorized_users = []
         for u in self.users.values():
-            # Check if user is authorized for the group (Legacy)
-            if group_id in u.authorized_groups:
-                authorized_users.append(u)
-                continue
-                
-            # Check if user is authorized for ANY door in this group
+            # Check if user is authorized for ANY door in this building
             if hasattr(u, 'authorized_doors') and u.authorized_doors:
-                if any(did in group_door_ids for did in u.authorized_doors):
+                if any(did in building_door_ids for did in u.authorized_doors):
                     authorized_users.append(u)
                     
         return authorized_users
@@ -367,41 +367,8 @@ class DoorAccessService:
         if user_id not in self.users:
             return False
         
-        user = self.users[user_id]
-        # Remove user from all groups
-        for group_id in user.authorized_groups:
-            if group_id in self.groups and user_id in self.groups[group_id].authorized_users:
-                self.groups[group_id].authorized_users.remove(user_id)
-        
         del self.users[user_id]
         self._save_users()
-        self._save_groups()
-        return True
-    
-    def authorize_user_for_groups(self, user_id: str, group_ids: List[str]) -> bool:
-        """Update user's authorized groups."""
-        if user_id not in self.users:
-            return False
-        
-        user = self.users[user_id]
-        old_groups = set(user.authorized_groups)
-        new_groups = set(group_ids)
-        
-        # Remove user from groups they're no longer in
-        for group_id in old_groups - new_groups:
-            if group_id in self.groups and user_id in self.groups[group_id].authorized_users:
-                self.groups[group_id].authorized_users.remove(user_id)
-        
-        # Add user to new groups
-        for group_id in new_groups - old_groups:
-            if group_id in self.groups and user_id not in self.groups[group_id].authorized_users:
-                self.groups[group_id].authorized_users.append(user_id)
-        
-        user.authorized_groups = list(new_groups)
-        user.updated_at = datetime.now()
-        
-        self._save_users()
-        self._save_groups()
         return True
     
     def authorize_user_for_doors(self, user_id: str, door_ids: List[str]) -> bool:
@@ -449,26 +416,17 @@ class DoorAccessService:
         if not user.face_registered:
             return {"authorized": False, "reason": "Face not registered"}
         
-        # Check door-level access first (new model)
+        # Check door-level access
         if hasattr(user, 'authorized_doors') and user.authorized_doors:
             if door_id in user.authorized_doors:
                 return {
                     "authorized": True, 
                     "user": user,
                     "door": door,
-                    "group": self.groups.get(door.group_id)
+                    "building": self.buildings.get(door.building_id)
                 }
         
-        # Fall back to group-level access (legacy model)
-        if door.group_id not in user.authorized_groups:
-            return {"authorized": False, "reason": "User not authorized for this door"}
-        
-        return {
-            "authorized": True, 
-            "user": user,
-            "door": door,
-            "group": self.groups.get(door.group_id)
-        }
+        return {"authorized": False, "reason": "User not authorized for this door"}
     
     def process_face_recognition_access(self, user_id: str, similarity_score: float,
                                         door_id: Optional[str] = None) -> Dict[str, Any]:
@@ -482,11 +440,12 @@ class DoorAccessService:
         # If no specific door, find all accessible doors and open them
         if door_id is None:
             accessible_doors = []
-            for group_id in user.authorized_groups:
-                if group_id in self.groups:
-                    for d_id in self.groups[group_id].doors:
-                        if d_id in self.doors and self.doors[d_id].status == DoorStatus.ONLINE:
-                            accessible_doors.append(d_id)
+            
+            # Use authorized_doors directly
+            if hasattr(user, 'authorized_doors'):
+                for d_id in user.authorized_doors:
+                    if d_id in self.doors and self.doors[d_id].status == DoorStatus.ONLINE:
+                        accessible_doors.append(d_id)
             
             if not accessible_doors:
                 return {"success": False, "message": "No accessible doors found"}
@@ -500,7 +459,7 @@ class DoorAccessService:
                     user_name=user.name,
                     event_type=AccessLogType.GRANTED,
                     similarity_score=similarity_score,
-                    group_id=self.doors[d_id].group_id,
+                    building_id=self.doors[d_id].building_id if d_id in self.doors else None,
                     details=f"Face recognition access granted (score: {similarity_score:.2f})"
                 )
                 self.access_logs.append(log_entry)
@@ -525,7 +484,7 @@ class DoorAccessService:
                 user_name=user.name,
                 event_type=AccessLogType.DENIED,
                 similarity_score=similarity_score,
-                group_id=self.doors[door_id].group_id if door_id in self.doors else None,
+                building_id=self.doors[door_id].building_id if door_id in self.doors else None,
                 details=f"Access denied: {access_check['reason']}"
             )
             self.access_logs.append(log_entry)
@@ -540,7 +499,7 @@ class DoorAccessService:
             user_name=user.name,
             event_type=AccessLogType.GRANTED,
             similarity_score=similarity_score,
-            group_id=self.doors[door_id].group_id,
+            building_id=self.doors[door_id].building_id,
             details=f"Face recognition access granted (score: {similarity_score:.2f})"
         )
         self.access_logs.append(log_entry)
@@ -556,7 +515,7 @@ class DoorAccessService:
     # ==================== Access Logs ====================
     
     def get_access_logs(self, limit: int = 100, door_id: Optional[str] = None,
-                       user_id: Optional[str] = None, group_id: Optional[str] = None) -> List[AccessLog]:
+                       user_id: Optional[str] = None, building_id: Optional[str] = None) -> List[AccessLog]:
         """Get access logs with optional filters."""
         logs = self.access_logs
         
@@ -564,8 +523,8 @@ class DoorAccessService:
             logs = [l for l in logs if l.door_id == door_id]
         if user_id:
             logs = [l for l in logs if l.user_id == user_id]
-        if group_id:
-            logs = [l for l in logs if l.group_id == group_id]
+        if building_id:
+            logs = [l for l in logs if l.building_id == building_id]
         
         return sorted(logs, key=lambda x: x.timestamp, reverse=True)[:limit]
     
@@ -578,7 +537,7 @@ class DoorAccessService:
                      if l.timestamp.date() == today]
         
         return {
-            "total_groups": len(self.groups),
+            "total_buildings": len(self.buildings),
             "total_doors": len(self.doors),
             "total_users": len(self.users),
             "registered_faces": sum(1 for u in self.users.values() if u.face_registered),
