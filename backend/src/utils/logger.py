@@ -69,8 +69,10 @@ class Logger:
             
         self._initialized = True
         
-        # Get the project root directory
-        project_root = os.getcwd()
+        # Get the project root directory (parent of backend folder)
+        # We're in backend/src/utils, so go up to backend, then to root
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        project_root = os.path.dirname(backend_dir) if os.path.basename(backend_dir) == 'backend' else backend_dir
         
         # Use Pydantic settings
         log_dir = settings.log_dir

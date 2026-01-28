@@ -38,7 +38,9 @@ class DoorAccessService:
         if self._initialized:
             return
             
-        self.data_dir = "Data/door_access"
+        # Use parent directory since we're in backend/src/app/services
+        self.data_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "Data", "door_access")
+        self.data_dir = os.path.abspath(self.data_dir)
         os.makedirs(self.data_dir, exist_ok=True)
         
         self.buildings_file = os.path.join(self.data_dir, "buildings.json")

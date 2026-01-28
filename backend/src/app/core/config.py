@@ -36,7 +36,10 @@ settings = Settings()
 
 # Load config.ini overrides
 config = configparser.ConfigParser()
+# Check both current directory and parent directory for config.ini
 config_path = os.path.join(os.getcwd(), 'config.ini')
+if not os.path.exists(config_path):
+    config_path = os.path.join(os.path.dirname(os.getcwd()), 'config.ini')
 if os.path.exists(config_path):
     config.read(config_path)
     if 'API' in config:
