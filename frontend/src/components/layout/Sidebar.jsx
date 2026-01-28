@@ -1,7 +1,16 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
+import { api } from '../../services/api'
 
 function Sidebar() {
+    const [configInfo, setConfigInfo] = useState(null)
+
+    useEffect(() => {
+        api.getConfig()
+            .then(data => setConfigInfo(data))
+            .catch(err => console.error('Failed to load config:', err))
+    }, [])
+
     return (
         <nav className="sidebar">
             <div className="sidebar-brand">
@@ -60,6 +69,23 @@ function Sidebar() {
                     </NavLink>
                 </li>
             </ul>
+            
+            {configInfo && (
+                <div className="sidebar-footer">
+                    <div className="config-card">
+                        <div className="config-icon">
+                            <i className="fas fa-user-circle"></i>
+                        </div>
+                        <div className="config-info">
+                            <div className="config-label">API User</div>
+                            <div className="config-value">{configInfo.api_user}</div>
+                        </div>
+                    </div>
+                    <div className="config-version">
+                        <small>{configInfo.app_name} v{configInfo.app_version}</small>
+                    </div>
+                </div>
+            )}
         </nav>
     )
 }

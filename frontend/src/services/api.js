@@ -108,5 +108,12 @@ export const api = {
     const res = await fetch(`${API_BASE}/access-logs`);
     if (!res.ok) throw new Error('Failed to fetch access logs');
     return res.json();
+  },
+
+  // System Config
+  async getConfig() {
+    const res = await fetch(`${API_BASE}/config`);
+    if (!res.ok) throw new Error('Failed to fetch config');
+    return res.json();
   }
 };

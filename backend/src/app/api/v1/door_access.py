@@ -398,3 +398,16 @@ async def get_access_logs(
             log_dict['building_color'] = building.color
         result.append(log_dict)
     return result
+
+
+# ==================== System Config ====================
+
+@router.get("/config")
+async def get_config_info():
+    """Get system configuration information."""
+    from src.app.core.config import settings
+    return {
+        "app_name": settings.app_name,
+        "app_version": settings.app_version,
+        "api_user": settings.validation_api_user
+    }
