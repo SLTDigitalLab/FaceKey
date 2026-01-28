@@ -13,7 +13,7 @@ function Sidebar({ isOpen, onClose }) {
   }, []);
 
   return (
-    <nav className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <nav className={`sidebar ${isOpen ? "open" : ""}`}>
       <div className="sidebar-brand">
         <div className="logo-container">
           <img src="/logo.png" alt="Visage Edge Logo" className="logo-image" />
