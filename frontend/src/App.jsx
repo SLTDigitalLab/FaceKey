@@ -10,6 +10,7 @@ import Toast from './components/layout/Toast'
 
 function App() {
     const [toasts, setToasts] = useState([]);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const showToast = (message, type = 'info') => {
         const id = Date.now();
@@ -19,10 +20,22 @@ function App() {
         }, 5000);
     };
 
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
+
+    const closeSidebar = () => {
+        setSidebarOpen(false);
+    };
+
     return (
         <Router>
             <div className="app">
-                <Sidebar />
+                <button className="mobile-menu-toggle" onClick={toggleSidebar}>
+                    <i className={`fas ${sidebarOpen ? 'fa-times' : 'fa-bars'}`}></i>
+                </button>
+                <div className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
+                <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
                 <main className="main-content">
                     <Routes>
                         <Route path="/" element={<Dashboard showToast={showToast} />} />

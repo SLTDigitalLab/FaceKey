@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { api } from "../../services/api";
 
-function Sidebar() {
+function Sidebar({ isOpen, onClose }) {
   const [configInfo, setConfigInfo] = useState(null);
 
   useEffect(() => {
@@ -13,7 +13,7 @@ function Sidebar() {
   }, []);
 
   return (
-    <nav className="sidebar">
+    <nav className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-brand">
         <div className="logo-container">
           <img src="/logo.png" alt="Visage Edge Logo" className="logo-image" />
@@ -26,6 +26,7 @@ function Sidebar() {
             to="/"
             className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
             end
+            onClick={onClose}
           >
             <i className="fas fa-th-large"></i>
             <span>Dashboard</span>
@@ -35,6 +36,7 @@ function Sidebar() {
           <NavLink
             to="/buildings"
             className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+            onClick={onClose}
           >
             <i className="fas fa-building"></i>
             <span>Buildings</span>
@@ -44,6 +46,7 @@ function Sidebar() {
           <NavLink
             to="/doors"
             className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+            onClick={onClose}
           >
             <i className="fas fa-door-open"></i>
             <span>Doors</span>
@@ -53,6 +56,7 @@ function Sidebar() {
           <NavLink
             to="/users"
             className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+            onClick={onClose}
           >
             <i className="fas fa-users"></i>
             <span>Employees</span>
@@ -62,6 +66,7 @@ function Sidebar() {
           <NavLink
             to="/logs"
             className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+            onClick={onClose}
           >
             <i className="fas fa-history"></i>
             <span>Access Logs</span>
