@@ -7,7 +7,6 @@ function Sidebar() {
             <div className="sidebar-brand">
                 <div className="logo-container">
                     <img src="/logo.png" alt="Visage Edge Logo" className="logo-image" />
-                    <h4 className="logo-text">V<span className="logo-small">ISAGE</span> E<span className="logo-small">DGE</span></h4>
                 </div>
                 <small className="brand-subtitle">
                     BUILDING ACCESS CONTROL
