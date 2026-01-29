@@ -86,8 +86,8 @@ function Dashboard({ showToast }) {
           </p>
         </div>
         <div className="d-flex gap-2 align-items-center">
-          <span className={`live-badge ${!isOnline ? 'offline' : ''}`}>
-            {isOnline ? 'LIVE' : 'Offline'}
+          <span className={`live-badge ${!isOnline ? "offline" : ""}`}>
+            {isOnline ? "LIVE" : "Offline"}
           </span>
           <button className="btn btn-outline-light" onClick={loadDashboard}>
             <i className="fas fa-sync-alt me-2"></i>Refresh
