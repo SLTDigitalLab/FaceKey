@@ -16,6 +16,7 @@ function Dashboard({ showToast }) {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
     loadDashboard();
@@ -35,7 +36,9 @@ function Dashboard({ showToast }) {
       setDoors(doorsData);
       setUsers(usersData);
       setAccessLogs(logsData);
+      setIsOnline(true);
     } catch (error) {
+      setIsOnline(false);
       showToast("Failed to load dashboard data", "error");
     }
   };
@@ -83,7 +86,9 @@ function Dashboard({ showToast }) {
           </p>
         </div>
         <div className="d-flex gap-2 align-items-center">
-          <span className="live-badge">LIVE</span>
+          <span className={`live-badge ${!isOnline ? 'offline' : ''}`}>
+            {isOnline ? 'LIVE' : 'Offline'}
+          </span>
           <button className="btn btn-outline-light" onClick={loadDashboard}>
             <i className="fas fa-sync-alt me-2"></i>Refresh
           </button>

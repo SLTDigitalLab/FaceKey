@@ -1068,6 +1068,16 @@ body {
     animation: pulse 1s ease-in-out infinite;
 }
 
+.live-badge.offline {
+    background: rgba(128, 128, 128, 0.2);
+    color: #808080;
+}
+
+.live-badge.offline::before {
+    background: #808080;
+    animation: none;
+}
+
 /* Responsive */
 @media (max-width: 991.98px) {
     .sidebar { transform: translateX(-100%); }
