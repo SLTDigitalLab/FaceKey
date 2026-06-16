@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { api } from "../../services/api";
 
 function AuthorizeUserModal({
@@ -15,17 +15,43 @@ function AuthorizeUserModal({
 
   useEffect(() => {
     if (show && user) {
+      setSearchTerm("");
       loadUserDoors();
     }
   }, [show, user]);
 
+  useEffect(() => {
+    if (!show) return;
+
+    const handleEscapeKey = (event) => {
+      if (event.key === "Escape") {
+        onHide();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscapeKey);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [show, onHide]);
+
+  const handleBackdropClick = (event) => {
+    if (event.target === event.currentTarget) {
+      onHide();
+    }
+  };
+
   const loadUserDoors = async () => {
     try {
       const userDoors = await api.getUserDoors(user.id);
-      // userDoors is now an array of door IDs
-      setSelectedDoors(userDoors);
+      setSelectedDoors(Array.isArray(userDoors) ? userDoors : []);
     } catch (error) {
       setSelectedDoors([]);
+
+      if (showToast) {
+        showToast("Failed to load user door access", "error");
+      }
     }
   };
 
@@ -33,7 +59,7 @@ function AuthorizeUserModal({
     setSelectedDoors((prev) =>
       prev.includes(doorId)
         ? prev.filter((id) => id !== doorId)
-        : [...prev, doorId],
+        : [...prev, doorId]
     );
   };
 
@@ -47,7 +73,7 @@ function AuthorizeUserModal({
       doors: doors.filter(
         (door) =>
           door.building_id === group.id &&
-          door.name.toLowerCase().includes(searchTerm.toLowerCase()),
+          door.name.toLowerCase().includes(searchTerm.toLowerCase())
       ),
     }))
     .filter((item) => item.doors.length > 0);
@@ -60,6 +86,9 @@ function AuthorizeUserModal({
         className="modal fade show"
         style={{ display: "block" }}
         tabIndex="-1"
+        role="dialog"
+        aria-modal="true"
+        onClick={handleBackdropClick}
       >
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content">
@@ -67,12 +96,14 @@ function AuthorizeUserModal({
               <h5 className="modal-title">
                 <i className="fas fa-key me-2"></i>Manage Door Access
               </h5>
+
               <button
                 type="button"
                 className="btn-close btn-close-white"
                 onClick={onHide}
               ></button>
             </div>
+
             <div className="modal-body">
               <p className="text-secondary mb-3">
                 Select which doors <strong>{user?.name || user?.id}</strong> can
@@ -85,7 +116,7 @@ function AuthorizeUserModal({
                   className="form-control"
                   placeholder="Search doors..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(event) => setSearchTerm(event.target.value)}
                 />
               </div>
 
@@ -105,6 +136,7 @@ function AuthorizeUserModal({
                           className="fas fa-building me-2"
                           style={{ color: group.color || "#667eea" }}
                         ></i>
+
                         <h6
                           className="mb-0"
                           style={{ color: group.color || "#667eea" }}
@@ -112,6 +144,7 @@ function AuthorizeUserModal({
                           {group.name}
                         </h6>
                       </div>
+
                       <div className="ms-4">
                         {groupDoors.map((door) => (
                           <div key={door.id} className="form-check mb-2">
@@ -122,6 +155,7 @@ function AuthorizeUserModal({
                               checked={selectedDoors.includes(door.id)}
                               onChange={() => handleToggleDoor(door.id)}
                             />
+
                             <label
                               className="form-check-label d-flex align-items-center text-white"
                               htmlFor={`door-${door.id}`}
@@ -130,7 +164,9 @@ function AuthorizeUserModal({
                                 className="fas fa-door-closed me-2"
                                 style={{ color: group.color || "#667eea" }}
                               ></i>
+
                               <span>{door.name}</span>
+
                               {door.location && (
                                 <span className="text-secondary ms-1">
                                   ({door.location})
@@ -145,6 +181,7 @@ function AuthorizeUserModal({
                 )}
               </div>
             </div>
+
             <div className="modal-footer">
               <button
                 type="button"
@@ -153,6 +190,7 @@ function AuthorizeUserModal({
               >
                 Cancel
               </button>
+
               <button
                 type="button"
                 className="btn btn-gradient"
@@ -164,6 +202,7 @@ function AuthorizeUserModal({
           </div>
         </div>
       </div>
+
       <div className="modal-backdrop fade show"></div>
     </>
   );

@@ -4,3 +4,7 @@ pydantic
 pydantic-settings
 jinja2
 aiohttp
+sqlalchemy
+pymysql
+cryptography
+python-multipart

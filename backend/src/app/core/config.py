@@ -10,6 +10,19 @@ class Settings(BaseSettings):
     port: int = 8000
     reload: bool = False
 
+    super_admin_company_user_id: str = "SUPER001"
+    super_admin_name: str = "System Super Admin"
+    super_admin_email: str = "superadmin@slt.lk"
+    super_admin_username: str = "superadmin"
+    super_admin_password: str = ""
+
+    brevo_api_key: str = ""
+    brevo_sender_email: str = ""
+    brevo_sender_name: str = "FaceKey Access Control"
+    otp_expiry_minutes: int = 5
+    otp_max_attempts: int = 5
+    otp_demo_mode: bool = True
+
     # Logging settings
     log_dir: str = "logs"
     log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -30,7 +43,15 @@ class Settings(BaseSettings):
     validation_api_user: str = "slt_interns"
     validation_api_key: str = "26PytkCBcZ"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    # Face verification settings
+    visage_face_verification_url: str = "https://visage.sltdigitallab.lk/api/face_verification"
+    face_similarity_threshold: float = 0.6
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 settings = Settings()
 

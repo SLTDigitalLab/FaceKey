@@ -13,3 +13,5 @@ coverage_report/
 *.service
 *.pkl
 *.json
+.env
+*.env
