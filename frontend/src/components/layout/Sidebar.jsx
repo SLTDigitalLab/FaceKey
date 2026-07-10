@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { api } from "../../services/api";
 
-function Sidebar({ isOpen, onClose }) {
+function Sidebar({ isOpen, onClose, adminProfile, onLogout }) {
   const [configInfo, setConfigInfo] = useState(null);
+  const [currentAdmin, setCurrentAdmin] = useState(adminProfile || null);
 
   useEffect(() => {
     api
@@ -11,6 +12,58 @@ function Sidebar({ isOpen, onClose }) {
       .then((data) => setConfigInfo(data))
       .catch((err) => console.error("Failed to load config:", err));
   }, []);
+
+  useEffect(() => {
+    setCurrentAdmin(adminProfile || api.getStoredAdminProfile());
+  }, [adminProfile]);
+
+  const isSuperAdmin = currentAdmin?.role === "super_admin";
+
+  const getRoleLabel = () => {
+    if (currentAdmin?.role === "super_admin") return "Super Admin";
+    if (currentAdmin?.role === "tenant_admin") return "Tenant Admin";
+    if (currentAdmin?.role === "building_admin") return "Building Admin";
+    return "Admin";
+  };
+
+  const getScopeLabel = () => {
+    if (!currentAdmin) return "Admin";
+
+    if (currentAdmin.role === "super_admin") {
+      return "Super Admin";
+    }
+
+    if (currentAdmin.role === "tenant_admin") {
+      return (
+        currentAdmin.tenant_name ||
+        currentAdmin.tenant_code ||
+        "Tenant Scope"
+      );
+    }
+
+    if (currentAdmin.role === "building_admin") {
+      return (
+        currentAdmin.building_name ||
+        currentAdmin.tenant_name ||
+        currentAdmin.tenant_code ||
+        "Building Scope"
+      );
+    }
+
+    return currentAdmin.name || "Admin";
+  };
+
+  const getScopeIcon = () => {
+    if (currentAdmin?.role === "super_admin") return "fas fa-crown";
+    if (currentAdmin?.role === "tenant_admin") return "fas fa-sitemap";
+    if (currentAdmin?.role === "building_admin") return "fas fa-building";
+    return "fas fa-user-circle";
+  };
+
+  const handleLogoutClick = () => {
+    onClose?.();
+    onLogout?.();
+  };
 
   return (
     <nav className={`sidebar ${isOpen ? "open" : ""}`}>
@@ -20,6 +73,7 @@ function Sidebar({ isOpen, onClose }) {
         </div>
         <small className="brand-subtitle">BUILDING ACCESS CONTROL</small>
       </div>
+
       <ul className="nav flex-column mt-3">
         <li className="nav-item">
           <NavLink
@@ -32,6 +86,20 @@ function Sidebar({ isOpen, onClose }) {
             <span>Dashboard</span>
           </NavLink>
         </li>
+
+        {isSuperAdmin && (
+          <li className="nav-item">
+            <NavLink
+              to="/tenants"
+              className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <i className="fas fa-sitemap"></i>
+              <span>Tenants</span>
+            </NavLink>
+          </li>
+        )}
+
         <li className="nav-item">
           <NavLink
             to="/buildings"
@@ -42,6 +110,7 @@ function Sidebar({ isOpen, onClose }) {
             <span>Buildings</span>
           </NavLink>
         </li>
+
         <li className="nav-item">
           <NavLink
             to="/doors"
@@ -52,6 +121,7 @@ function Sidebar({ isOpen, onClose }) {
             <span>Doors</span>
           </NavLink>
         </li>
+
         <li className="nav-item">
           <NavLink
             to="/users"
@@ -62,6 +132,7 @@ function Sidebar({ isOpen, onClose }) {
             <span>Employees</span>
           </NavLink>
         </li>
+
         <li className="nav-item">
           <NavLink
             to="/logs"
@@ -74,24 +145,37 @@ function Sidebar({ isOpen, onClose }) {
         </li>
       </ul>
 
-      {configInfo && (
-        <div className="sidebar-footer">
-          <div className="config-card">
+      <div className="sidebar-footer">
+        <div className="sidebar-user-card">
+          <div className="sidebar-user-top">
             <div className="config-icon">
-              <i className="fas fa-user-circle"></i>
+              <i className={getScopeIcon()}></i>
             </div>
+
             <div className="config-info">
-              <div className="config-label">API User</div>
-              <div className="config-value">{configInfo.api_user}</div>
+              <div className="config-label">{getRoleLabel()}</div>
+              <div className="config-value">{getScopeLabel()}</div>
             </div>
           </div>
+
+          <button
+            type="button"
+            className="sidebar-logout-btn"
+            onClick={handleLogoutClick}
+          >
+            <i className="fas fa-sign-out-alt"></i>
+            Logout
+          </button>
+        </div>
+
+        {configInfo && (
           <div className="config-version">
             <small>
               {configInfo.app_name} v{configInfo.app_version}
             </small>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </nav>
   );
 }
