@@ -15,14 +15,7 @@ function AddUserModal({ show, onHide, onSubmit, showToast }) {
   const [isVerified, setIsVerified] = useState(false);
   const [employeeData, setEmployeeData] = useState(null);
 
-  useEffect(() => {
-    if (show) {
-      setFormData(getInitialFormData());
-      setIsVerified(false);
-      setEmployeeData(null);
-      setIsVerifying(false);
-    }
-  }, [show]);
+
 
   useEffect(() => {
     if (!show) return;
@@ -41,10 +34,6 @@ function AddUserModal({ show, onHide, onSubmit, showToast }) {
   }, [show]);
 
   const handleClose = () => {
-    setFormData(getInitialFormData());
-    setIsVerified(false);
-    setEmployeeData(null);
-    setIsVerifying(false);
     onHide();
   };
 
@@ -159,7 +148,6 @@ function AddUserModal({ show, onHide, onSubmit, showToast }) {
         tabIndex="-1"
         role="dialog"
         aria-modal="true"
-        onClick={handleBackdropClick}
       >
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">

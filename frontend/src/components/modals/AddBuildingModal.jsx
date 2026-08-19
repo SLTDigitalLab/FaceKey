@@ -25,11 +25,7 @@ function AddBuildingModal({
 
   const [formData, setFormData] = useState(getInitialFormData());
 
-  useEffect(() => {
-    if (show) {
-      setFormData(getInitialFormData());
-    }
-  }, [show]);
+
 
   useEffect(() => {
     if (!show) return;
@@ -60,10 +56,6 @@ function AddBuildingModal({
 
   const isSuperAdmin = currentAdmin?.role === "super_admin";
 
-  const isValidInspFormat = (value) => {
-    const cleanValue = String(value || "").trim();
-    return /^InSP\/\d{4}\/\d+\/\d+$/.test(cleanValue);
-  };
 
   const handleBackdropClick = (event) => {
     if (event.target === event.currentTarget) {
@@ -98,10 +90,8 @@ function AddBuildingModal({
 
     const cleanCompanyUserId = formData.default_admin.company_user_id.trim();
 
-    if (!isValidInspFormat(cleanCompanyUserId)) {
-      alert(
-        "Building admin company user ID must be a valid InSP format. Example: InSP/2025/6953/566"
-      );
+    if (!cleanCompanyUserId) {
+      alert("Please enter a company user ID");
       return;
     }
 
@@ -148,7 +138,6 @@ function AddBuildingModal({
         tabIndex="-1"
         role="dialog"
         aria-modal="true"
-        onClick={handleBackdropClick}
       >
         <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
@@ -250,20 +239,17 @@ function AddBuildingModal({
                 <h6 className="mb-3">Default Building Admin</h6>
 
                 <div className="mb-3">
-                  <label className="form-label">Company User ID / InSP ID</label>
+                  <label className="form-label">Company User ID</label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="e.g., InSP/2025/6953/566"
+                    placeholder="e.g., EMP001"
                     value={formData.default_admin.company_user_id}
                     onChange={(e) =>
                       handleDefaultAdminChange("company_user_id", e.target.value)
                     }
                     required
                   />
-                  <small className="text-muted">
-                    Enter only the InSP format. Example: InSP/2025/6953/566
-                  </small>
                 </div>
 
                 <div className="mb-3">

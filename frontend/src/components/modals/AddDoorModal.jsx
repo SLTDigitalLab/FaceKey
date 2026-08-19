@@ -5,17 +5,11 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
     name: "",
     location: "",
     group_id: "",
-    ip_address: "",
-    port: "80",
   });
 
   const [formData, setFormData] = useState(getInitialFormData());
 
-  useEffect(() => {
-    if (show) {
-      setFormData(getInitialFormData());
-    }
-  }, [show]);
+
 
   useEffect(() => {
     if (!show) return;
@@ -55,7 +49,6 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
         tabIndex="-1"
         role="dialog"
         aria-modal="true"
-        onClick={handleBackdropClick}
       >
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
@@ -118,37 +111,6 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                <div className="row">
-                  <div className="col-md-7 mb-3">
-                    <label className="form-label">IP Address</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="192.168.1.100"
-                      value={formData.ip_address}
-                      onChange={(event) =>
-                        setFormData({
-                          ...formData,
-                          ip_address: event.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div className="col-md-5 mb-3">
-                    <label className="form-label">Port</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="80"
-                      value={formData.port}
-                      onChange={(event) =>
-                        setFormData({ ...formData, port: event.target.value })
-                      }
-                    />
-                  </div>
                 </div>
               </div>
 

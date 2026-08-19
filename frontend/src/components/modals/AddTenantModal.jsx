@@ -16,11 +16,7 @@ function AddTenantModal({ show, onHide, onSubmit }) {
 
   const [formData, setFormData] = useState(getInitialFormData());
 
-  useEffect(() => {
-    if (show) {
-      setFormData(getInitialFormData());
-    }
-  }, [show]);
+
 
   useEffect(() => {
     if (!show) return;
@@ -129,7 +125,6 @@ function AddTenantModal({ show, onHide, onSubmit }) {
         tabIndex="-1"
         role="dialog"
         aria-modal="true"
-        onClick={handleBackdropClick}
       >
         <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
@@ -208,10 +203,7 @@ function AddTenantModal({ show, onHide, onSubmit }) {
                     }
                     required
                   />
-                  <small className="text-muted">
-                    Tenant admin company ID can be any company ID. InSP format is
-                    not required here.
-                  </small>
+
                 </div>
 
                 <div className="mb-3">
