@@ -12,6 +12,10 @@ coverage_report/
 *.dat
 *.service
 *.pkl
+
 *.json
+!frontend/package.json
+!frontend/package-lock.json
+
 .env
 *.env
