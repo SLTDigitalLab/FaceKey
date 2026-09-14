@@ -4421,6 +4421,18 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.24);
 }
 
+.pro-status-badge.inactive {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.24);
+}
+
+.pro-status-badge.danger {
+  color: #fda4af;
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
 .pro-card-body {
   flex: 1;
   padding-top: 22px;

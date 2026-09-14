@@ -539,6 +539,7 @@ import AddDoorModal from "../modals/AddDoorModal";
 import ConfirmationModal from "../modals/ConfirmationModal";
 import AddUserModal from "../modals/AddUserModal";
 import DoorAuthorizedUsersModal from "../modals/DoorAuthorizedUsersModal";
+import EditDoorModal from "../modals/EditDoorModal";
 
 function Doors({ showToast }) {
   const [groups, setGroups] = useState([]);
@@ -558,6 +559,9 @@ function Doors({ showToast }) {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDoorUsersModal, setShowDoorUsersModal] = useState(false);
   const [selectedDoorForUsers, setSelectedDoorForUsers] = useState(null);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedDoorForEdit, setSelectedDoorForEdit] = useState(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -820,6 +824,44 @@ function Doors({ showToast }) {
     ).length;
   };
 
+  const handleEditDoor = (door) => {
+    setSelectedDoorForEdit(door);
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (doorId, data) => {
+    try {
+      const result = await api.updateDoor(doorId, data);
+
+      if (result.success || result.door) {
+        showToast("Door updated successfully", "success");
+        setShowEditModal(false);
+        setSelectedDoorForEdit(null);
+        loadData();
+      }
+    } catch (error) {
+      showToast(error.message || "Failed to update door", "error");
+    }
+  };
+
+  const getDoorStatusBadge = (door) => {
+    const statusConfig = {
+      online: { className: "active", icon: "fa-circle-check", label: "Online" },
+      offline: { className: "inactive", icon: "fa-circle-xmark", label: "Offline" },
+      locked: { className: "warning", icon: "fa-lock", label: "Locked" },
+      unlocked: { className: "active", icon: "fa-lock-open", label: "Unlocked" },
+      error: { className: "danger", icon: "fa-triangle-exclamation", label: "Error" },
+    };
+
+    const config = statusConfig[door.status] || statusConfig.online;
+    return (
+      <span className={`pro-status-badge ${config.className}`}>
+        <i className={`fas ${config.icon} me-1`}></i>
+        {config.label}
+      </span>
+    );
+  };
+
   const getRoleScopeText = () => {
     if (currentAdmin?.role === "super_admin") return "All tenant doors";
     if (currentAdmin?.role === "tenant_admin") return "Your tenant doors";
@@ -997,9 +1039,7 @@ function Doors({ showToast }) {
                           <i className="fas fa-door-open"></i>
                         </div>
 
-                        <span className="pro-status-badge active">
-                          Configured
-                        </span>
+                        {getDoorStatusBadge(door)}
                       </div>
 
                       <div className="pro-card-body">
@@ -1034,6 +1074,20 @@ function Doors({ showToast }) {
                             <span>Port</span>
                             <strong>{door.port || 80}</strong>
                           </div>
+
+                          {currentAdmin?.role === "SUPER_ADMIN" && (
+                            <>
+                              <div>
+                                <span>Door ID</span>
+                                <strong style={{ fontSize: "0.85em", opacity: 0.8 }}>{door.id}</strong>
+                              </div>
+
+                              <div>
+                                <span>API Key</span>
+                                <strong style={{ fontSize: "0.85em", opacity: 0.8, wordBreak: "break-all" }}>{door.api_key || "Not available"}</strong>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -1063,6 +1117,15 @@ function Doors({ showToast }) {
                           onClick={() => handleViewDoorUsers(door)}
                         >
                           <i className="fas fa-users"></i>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="pro-icon-card-btn"
+                          title="Edit door"
+                          onClick={() => handleEditDoor(door)}
+                        >
+                          <i className="fas fa-pen"></i>
                         </button>
 
                         <button
@@ -1127,6 +1190,17 @@ function Doors({ showToast }) {
           setShowDoorUsersModal(false);
           setSelectedDoorForUsers(null);
         }}
+      />
+
+      <EditDoorModal
+        show={showEditModal}
+        door={selectedDoorForEdit}
+        groups={groups}
+        onHide={() => {
+          setShowEditModal(false);
+          setSelectedDoorForEdit(null);
+        }}
+        onSubmit={handleEditSubmit}
       />
     </div>
   );

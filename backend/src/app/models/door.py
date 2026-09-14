@@ -15,6 +15,7 @@ class Door(Base):
     port = Column(Integer, default=80)
     status = Column(String(32), default="online")
     is_locked = Column(Boolean, default=True)
+    api_key = Column(String(128), nullable=True)
 
     # 🔴 IMPORTANT: must stay STRING (not int)
     building_id = Column(String(64), ForeignKey("buildings.id"), nullable=False, index=True)

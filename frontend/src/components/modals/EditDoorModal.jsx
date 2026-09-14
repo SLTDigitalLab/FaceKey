@@ -1,17 +1,25 @@
 import React, { useEffect, useState } from "react";
 
-function AddDoorModal({ show, groups, onHide, onSubmit }) {
-  const getInitialFormData = () => ({
+function EditDoorModal({ show, door, groups, onHide, onSubmit }) {
+  const [formData, setFormData] = useState({
     name: "",
     location: "",
-    group_id: "",
     ip_address: "",
     port: 80,
+    status: "online",
   });
 
-  const [formData, setFormData] = useState(getInitialFormData());
-
-
+  useEffect(() => {
+    if (show && door) {
+      setFormData({
+        name: door.name || "",
+        location: door.location || "",
+        ip_address: door.ip_address || "",
+        port: door.port || 80,
+        status: door.status || "online",
+      });
+    }
+  }, [show, door]);
 
   useEffect(() => {
     if (!show) return;
@@ -29,19 +37,20 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
     };
   }, [show, onHide]);
 
-  const handleBackdropClick = (event) => {
-    if (event.target === event.currentTarget) {
-      onHide();
-    }
-  };
-
   const handleSubmit = (event) => {
     event.preventDefault();
-    onSubmit(formData);
-    setFormData(getInitialFormData());
+    onSubmit(door.id, formData);
   };
 
-  if (!show) return null;
+  if (!show || !door) return null;
+
+  const statusOptions = [
+    { value: "online", label: "Online", icon: "fa-circle-check", color: "#22c55e" },
+    { value: "offline", label: "Offline", icon: "fa-circle-xmark", color: "#ef4444" },
+    { value: "locked", label: "Locked", icon: "fa-lock", color: "#f59e0b" },
+    { value: "unlocked", label: "Unlocked", icon: "fa-lock-open", color: "#3b82f6" },
+    { value: "error", label: "Error", icon: "fa-triangle-exclamation", color: "#dc2626" },
+  ];
 
   return (
     <>
@@ -56,7 +65,7 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title">
-                <i className="fas fa-door-open me-2"></i>Add Door
+                <i className="fas fa-pen-to-square me-2"></i>Edit Door
               </h5>
 
               <button
@@ -68,6 +77,13 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
 
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label text-muted small">Door ID</label>
+                  <div className="form-control" style={{ opacity: 0.7, cursor: "not-allowed" }}>
+                    {door.id}
+                  </div>
+                </div>
+
                 <div className="mb-3">
                   <label className="form-label">Door Name</label>
                   <input
@@ -96,23 +112,26 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Building</label>
+                  <label className="form-label">
+                    <i className="fas fa-signal me-1"></i>
+                    Door Status
+                  </label>
                   <select
                     className="form-select"
-                    value={formData.group_id}
+                    value={formData.status}
                     onChange={(event) =>
-                      setFormData({ ...formData, group_id: event.target.value })
+                      setFormData({ ...formData, status: event.target.value })
                     }
-                    required
                   >
-                    <option value="">Select a building</option>
-
-                    {groups.map((group) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name}
+                    {statusOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
                       </option>
                     ))}
                   </select>
+                  <small className="form-text text-muted">
+                    Access is denied when status is <strong>offline</strong> or <strong>error</strong>.
+                  </small>
                 </div>
 
                 <div className="mb-3">
@@ -163,7 +182,7 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
                 </button>
 
                 <button type="submit" className="btn btn-gradient">
-                  Add Door
+                  <i className="fas fa-save me-2"></i>Save Changes
                 </button>
               </div>
             </form>
@@ -176,4 +195,4 @@ function AddDoorModal({ show, groups, onHide, onSubmit }) {
   );
 }
 
-export default AddDoorModal;
+export default EditDoorModal;

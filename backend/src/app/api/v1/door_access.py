@@ -694,6 +694,37 @@ async def open_door(
         handle_admin_error(error)
 
 
+@router.get("/doors/{door_id}/status")
+async def get_door_status(
+    door_id: str,
+    actor_admin_id: str = Header(default=None, alias="X-Admin-Id"),
+):
+    """Get a door's current status (online/offline/error). Used by face recognition devices."""
+    service = get_door_access_service()
+
+    if not actor_admin_id:
+        raise HTTPException(status_code=401, detail="X-Admin-Id header is required")
+
+    try:
+        door = service.get_door_for_admin(actor_admin_id, door_id)
+
+        if not door:
+            raise HTTPException(status_code=404, detail="Door not found")
+
+        return {
+            "door_id": door.id,
+            "name": door.name,
+            "status": door.status,
+            "is_locked": door.is_locked,
+            "building_id": door.building_id,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        handle_admin_error(error)
+
+
 # ==================== Users ====================
 
 @router.get("/users/verify/{user_id:path}")
@@ -1111,6 +1142,7 @@ async def process_face_image_access(
     camera_id: Optional[str] = Form("postman_camera"),
     image: UploadFile = File(...),
     actor_admin_id: str = Header(default=None, alias="X-Admin-Id"),
+    api_key: str = Header(default=None, alias="X-Api-Key"),
 ):
     """
     Receive employee image from Postman/camera, verify it with Visage,
@@ -1119,8 +1151,8 @@ async def process_face_image_access(
 
     service = get_door_access_service()
 
-    if not actor_admin_id:
-        raise HTTPException(status_code=401, detail="X-Admin-Id header is required")
+    if not actor_admin_id and not api_key:
+        raise HTTPException(status_code=401, detail="Either X-Admin-Id or X-Api-Key header is required")
 
     allowed_content_types = [
         "image/jpeg",
@@ -1150,19 +1182,29 @@ async def process_face_image_access(
         )
 
     try:
-        return await service.process_face_image_access_event_for_admin(
-            actor_admin_id=actor_admin_id,
-            door_id=door_id,
-            image_bytes=image_bytes,
-            image_filename=image.filename or "employee.jpg",
-            image_content_type=image.content_type or "image/jpeg",
-            camera_id=camera_id,
-        )
+        if api_key:
+            # Device authentication using API key
+            service.verify_door_api_key(door_id, api_key)
+            
+            return await service.process_face_image_access_event(
+                door_id=door_id,
+                image_bytes=image_bytes,
+                image_filename=image.filename or "employee.jpg",
+                image_content_type=image.content_type or "image/jpeg",
+                camera_id=camera_id,
+            )
+        else:
+            return await service.process_face_image_access_event_for_admin(
+                actor_admin_id=actor_admin_id,
+                door_id=door_id,
+                image_bytes=image_bytes,
+                image_filename=image.filename or "employee.jpg",
+                image_content_type=image.content_type or "image/jpeg",
+                camera_id=camera_id,
+            )
 
     except Exception as error:
         handle_admin_error(error)
-
-@router.post("/access/camera-event")
 
 @router.post("/access/otp/request")
 async def request_email_otp_access(
@@ -1218,9 +1260,11 @@ async def verify_email_otp_access(
     except Exception as error:
         handle_admin_error(error)
         
+@router.post("/access/camera-event")
 async def process_camera_event(
     camera_data: CameraAccessRequest,
     actor_admin_id: str = Header(default=None, alias="X-Admin-Id"),
+    api_key: str = Header(default=None, alias="X-Api-Key"),
 ):
     logger.info(
         f"Camera event received: door={camera_data.door_id}, "
@@ -1230,17 +1274,28 @@ async def process_camera_event(
 
     service = get_door_access_service()
 
-    if not actor_admin_id:
-        raise HTTPException(status_code=401, detail="X-Admin-Id header is required")
+    if not actor_admin_id and not api_key:
+        raise HTTPException(status_code=401, detail="Either X-Admin-Id or X-Api-Key header is required")
 
     try:
-        result = await service.process_camera_access_event_for_admin(
-            actor_admin_id=actor_admin_id,
-            door_id=camera_data.door_id,
-            user_id=camera_data.user_id,
-            similarity_score=camera_data.similarity_score,
-            camera_id=camera_data.camera_id,
-        )
+        if api_key:
+            # Device authentication using API key
+            service.verify_door_api_key(camera_data.door_id, api_key)
+            result = await service.process_camera_access_event(
+                door_id=camera_data.door_id,
+                user_id=camera_data.user_id,
+                similarity_score=camera_data.similarity_score,
+                camera_id=camera_data.camera_id,
+            )
+        else:
+            # Admin dashboard testing using Admin ID
+            result = await service.process_camera_access_event_for_admin(
+                actor_admin_id=actor_admin_id,
+                door_id=camera_data.door_id,
+                user_id=camera_data.user_id,
+                similarity_score=camera_data.similarity_score,
+                camera_id=camera_data.camera_id,
+            )
 
         return result
 

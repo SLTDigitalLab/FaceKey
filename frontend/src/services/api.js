@@ -652,6 +652,77 @@ export const api = {
     return handleResponse(res, "Failed to unlock door");
   },
 
+  async getDoor(doorId) {
+    const res = await fetch(`${API_BASE}/doors/${encodeURIComponent(doorId)}`, {
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(res, "Failed to fetch door details");
+  },
+
+  async updateDoor(doorId, data) {
+    const res = await fetch(`${API_BASE}/doors/${encodeURIComponent(doorId)}`, {
+      method: "PUT",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(data),
+    });
+
+    return handleResponse(res, "Failed to update door");
+  },
+
+  async getDoorStatus(doorId) {
+    const res = await fetch(`${API_BASE}/doors/${encodeURIComponent(doorId)}/status`, {
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(res, "Failed to fetch door status");
+  },
+
+  async checkAccess(userId, doorId) {
+    const params = new URLSearchParams({
+      user_id: userId,
+      door_id: doorId,
+    });
+
+    const res = await fetch(`${API_BASE}/access/check?${params.toString()}`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(res, "Failed to check access");
+  },
+
+  async processFaceImageAccess(doorId, imageFile, cameraId = null) {
+    const formData = new FormData();
+    formData.append("door_id", doorId);
+    formData.append("image", imageFile);
+
+    if (cameraId) {
+      formData.append("camera_id", cameraId);
+    }
+
+    const adminId = getStoredAdminId();
+    const headers = adminId ? { "X-Admin-Id": adminId } : {};
+
+    const res = await fetch(`${API_BASE}/access/face-image`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    return handleResponse(res, "Failed to process face image access");
+  },
+
+  async processCameraEvent(data) {
+    const res = await fetch(`${API_BASE}/access/camera-event`, {
+      method: "POST",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(data),
+    });
+
+    return handleResponse(res, "Failed to process camera event");
+  },
+
   // Users
   async getUsers(buildingId = null) {
     const url = buildingId

@@ -43,6 +43,7 @@ class Door(BaseModel):
     port: int = Field(default=80, description="Door controller port")
     status: DoorStatus = Field(default=DoorStatus.ONLINE)
     is_locked: bool = Field(default=True)
+    api_key: Optional[str] = Field(default=None, description="API Key for door authentication")
     building_id: str = Field(..., description="Building this door belongs to")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)

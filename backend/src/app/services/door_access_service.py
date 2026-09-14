@@ -144,6 +144,7 @@ class DoorAccessService:
             port=row.port or 80,
             status=DoorStatus(row.status) if isinstance(row.status, str) else DoorStatus.ONLINE,
             is_locked=bool(row.is_locked),
+            api_key=getattr(row, "api_key", None),
             building_id=row.building_id,
             created_at=row.created_at or datetime.now(),
             updated_at=row.updated_at or row.created_at or datetime.now(),
@@ -639,6 +640,78 @@ class DoorAccessService:
         access_result["visage_similarity_score"] = visage_result.get("similarity_score")
         access_result["visage_threshold_used"] = visage_result.get("threshold_used")
         access_result["visage_message"] = visage_result.get("message")
+        access_result["visage_response"] = visage_result.get("visage_response")
+
+        return access_result
+
+    async def process_face_image_access_event(
+        self,
+        door_id: str,
+        image_bytes: bytes,
+        image_filename: str,
+        image_content_type: str,
+        camera_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Process face image access event for devices (API Key authenticated).
+        """
+        visage_result = await self.verify_face_with_visage(
+            image_bytes=image_bytes,
+            image_filename=image_filename,
+            image_content_type=image_content_type,
+        )
+
+        if not visage_result["face_verified"]:
+            db = self._get_db()
+            try:
+                door = db.query(DBDoor).filter(DBDoor.id == door_id).first()
+                log_entry = DBAccessLog(
+                    id=str(uuid.uuid4()),
+                    door_id=door_id,
+                    user_id=None,
+                    user_name=None,
+                    event_type=AccessLogType.DENIED.value,
+                    similarity_score=visage_result.get("similarity_score"),
+                    building_id=door.building_id if door else None,
+                    details=(
+                        f"Face verification failed from Visage: {visage_result.get('message')}"
+                        + (f" | camera_id={camera_id}" if camera_id else "")
+                    ),
+                )
+                db.add(log_entry)
+                db.commit()
+            finally:
+                db.close()
+
+            return {
+                "success": True,
+                "event_logged": True,
+                "face_verified": False,
+                "access_granted": False,
+                "door_opened": False,
+                "message": visage_result.get("message") or "Face verification failed",
+                "door_id": door_id,
+                "camera_id": camera_id,
+                "visage_response": visage_result.get("visage_response"),
+            }
+
+        matched_user_id = visage_result["matched_user_id"]
+        similarity_score = visage_result.get("similarity_score")
+
+        if similarity_score is None:
+            similarity_score = float(getattr(settings, "face_similarity_threshold", 0.6))
+
+        access_result = await self.process_camera_access_event(
+            door_id=door_id,
+            user_id=matched_user_id,
+            similarity_score=similarity_score,
+            camera_id=camera_id,
+        )
+
+        access_result["face_verified"] = True
+        access_result["matched_user_id_from_visage"] = matched_user_id
+        access_result["visage_similarity_score"] = visage_result.get("similarity_score")
+        access_result["visage_threshold_used"] = visage_result.get("threshold_used")
         access_result["visage_response"] = visage_result.get("visage_response")
 
         return access_result
@@ -1611,6 +1684,20 @@ class DoorAccessService:
 
         return None, raw_user_id, clean_user_id
 
+    def verify_door_api_key(self, door_id: str, api_key: str) -> bool:
+        db = self._get_db()
+        try:
+            door = db.query(DBDoor).filter(DBDoor.id == door_id).first()
+            if not door:
+                raise PermissionError("Invalid door ID or API key")
+            
+            if getattr(door, "api_key", None) != api_key:
+                raise PermissionError("Invalid door ID or API key")
+            
+            return True
+        finally:
+            db.close()
+
     async def process_camera_access_event(
         self,
         door_id: str,
@@ -2313,6 +2400,9 @@ class DoorAccessService:
         try:
             actor = self._require_active_admin(db, actor_admin_id)
             building = self._require_building_scope(db, actor, building_id)
+            
+            # Generate a secure 32-byte URL-safe string
+            new_api_key = secrets.token_urlsafe(32)
 
             row = DBDoor(
                 id=self._new_id("door"),
@@ -2321,6 +2411,7 @@ class DoorAccessService:
                 ip_address=ip_address,
                 port=port,
                 building_id=building.id,
+                api_key=new_api_key,
             )
 
             db.add(row)
