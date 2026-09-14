@@ -1075,7 +1075,7 @@ function Doors({ showToast }) {
                             <strong>{door.port || 80}</strong>
                           </div>
 
-                          {currentAdmin?.role === "SUPER_ADMIN" && (
+                          {currentAdmin?.role === "super_admin" && (
                             <>
                               <div>
                                 <span>Door ID</span>
