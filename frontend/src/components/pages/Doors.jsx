@@ -540,6 +540,7 @@ import ConfirmationModal from "../modals/ConfirmationModal";
 import AddUserModal from "../modals/AddUserModal";
 import DoorAuthorizedUsersModal from "../modals/DoorAuthorizedUsersModal";
 import EditDoorModal from "../modals/EditDoorModal";
+import DoorActivityModal from "../modals/DoorActivityModal";
 
 function Doors({ showToast }) {
   const [groups, setGroups] = useState([]);
@@ -562,6 +563,9 @@ function Doors({ showToast }) {
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedDoorForEdit, setSelectedDoorForEdit] = useState(null);
+
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [selectedDoorForActivity, setSelectedDoorForActivity] = useState(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -827,6 +831,11 @@ function Doors({ showToast }) {
   const handleEditDoor = (door) => {
     setSelectedDoorForEdit(door);
     setShowEditModal(true);
+  };
+
+  const handleViewActivity = (door) => {
+    setSelectedDoorForActivity(door);
+    setShowActivityModal(true);
   };
 
   const handleEditSubmit = async (doorId, data) => {
@@ -1122,6 +1131,15 @@ function Doors({ showToast }) {
                         <button
                           type="button"
                           className="pro-icon-card-btn"
+                          title="Activity record"
+                          onClick={() => handleViewActivity(door)}
+                        >
+                          <i className="fas fa-chart-line"></i>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="pro-icon-card-btn"
                           title="Edit door"
                           onClick={() => handleEditDoor(door)}
                         >
@@ -1201,6 +1219,16 @@ function Doors({ showToast }) {
           setSelectedDoorForEdit(null);
         }}
         onSubmit={handleEditSubmit}
+      />
+
+      <DoorActivityModal
+        show={showActivityModal}
+        door={selectedDoorForActivity}
+        onHide={() => {
+          setShowActivityModal(false);
+          setSelectedDoorForActivity(null);
+        }}
+        showToast={showToast}
       />
     </div>
   );
