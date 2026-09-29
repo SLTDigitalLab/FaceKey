@@ -20,6 +20,9 @@ class Door(Base):
     # 🔴 IMPORTANT: must stay STRING (not int)
     building_id = Column(String(64), ForeignKey("buildings.id"), nullable=False, index=True)
 
+    temporary_otp = Column(String(32), nullable=True)
+    temporary_otp_expires_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

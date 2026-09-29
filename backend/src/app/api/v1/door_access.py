@@ -666,6 +666,40 @@ async def delete_door(
         handle_admin_error(error)
 
 
+@router.post("/doors/{door_id}/generate-otp")
+async def generate_temporary_otp(
+    door_id: str,
+    actor_admin_id: str = Header(default=None, alias="X-Admin-Id"),
+):
+    service = get_door_access_service()
+    if not actor_admin_id:
+        raise HTTPException(status_code=401, detail="X-Admin-Id header is required")
+    try:
+        door = service.generate_temporary_otp_for_admin(actor_admin_id, door_id, days=1)
+        return {"success": True, "door": door.model_dump(mode="json")}
+    except Exception as error:
+        handle_admin_error(error)
+
+@router.post("/doors/{door_id}/verify-otp")
+async def verify_temporary_otp(
+    door_id: str,
+    request: dict,
+):
+    otp = request.get("otp")
+    if not otp:
+        raise HTTPException(status_code=400, detail="OTP is required")
+        
+    service = get_door_access_service()
+    try:
+        result = await service.verify_temporary_otp(door_id, otp)
+        if not result["success"]:
+            raise HTTPException(status_code=401, detail=result["message"])
+        return result
+    except HTTPException:
+        raise
+    except Exception as error:
+        handle_admin_error(error)
+
 @router.post("/doors/{door_id}/open")
 async def open_door(
     door_id: str,

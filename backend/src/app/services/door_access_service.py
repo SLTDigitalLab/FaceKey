@@ -146,6 +146,8 @@ class DoorAccessService:
             is_locked=bool(row.is_locked),
             api_key=getattr(row, "api_key", None),
             building_id=row.building_id,
+            temporary_otp=getattr(row, "temporary_otp", None),
+            temporary_otp_expires_at=getattr(row, "temporary_otp_expires_at", None),
             created_at=row.created_at or datetime.now(),
             updated_at=row.updated_at or row.created_at or datetime.now(),
         )
@@ -2615,6 +2617,83 @@ class DoorAccessService:
         finally:
             db.close()
 
+    def generate_temporary_otp_for_admin(self, actor_admin_id: str, door_id: str, days: int = 1) -> Door:
+        db = self._get_db()
+        try:
+            actor = self._require_active_admin(db, actor_admin_id)
+            door = db.query(DBDoor).filter(DBDoor.id == door_id).first()
+            if not door:
+                raise LookupError("Door not found")
+            self._require_building_scope(db, actor, door.building_id)
+            
+            import random
+            otp = f"{random.randint(0, 999999):06d}"
+            
+            door.temporary_otp = otp
+            door.temporary_otp_expires_at = datetime.now() + timedelta(days=days)
+            door.updated_at = datetime.now()
+            
+            db.commit()
+            db.refresh(door)
+            
+            return self._to_door_schema(door)
+        finally:
+            db.close()
+
+    async def verify_temporary_otp(self, door_id: str, otp: str) -> Dict[str, Any]:
+        db = self._get_db()
+        try:
+            door = db.query(DBDoor).filter(DBDoor.id == door_id).first()
+            if not door:
+                return {"success": False, "message": "Door not found"}
+                
+            if not door.temporary_otp or door.temporary_otp != otp:
+                log_entry = DBAccessLog(
+                    id=str(uuid.uuid4()),
+                    door_id=door_id,
+                    event_type=AccessLogType.DENIED.value,
+                    building_id=door.building_id,
+                    details="Invalid temporary OTP entered"
+                )
+                db.add(log_entry)
+                db.commit()
+                return {"success": False, "message": "Invalid OTP"}
+                
+            # If the database returns naive datetime for DATETIME columns
+            now = datetime.now()
+            if door.temporary_otp_expires_at and door.temporary_otp_expires_at.tzinfo:
+                now = datetime.now().astimezone(door.temporary_otp_expires_at.tzinfo)
+                
+            if door.temporary_otp_expires_at and door.temporary_otp_expires_at < now:
+                log_entry = DBAccessLog(
+                    id=str(uuid.uuid4()),
+                    door_id=door_id,
+                    event_type=AccessLogType.DENIED.value,
+                    building_id=door.building_id,
+                    details="Expired temporary OTP entered"
+                )
+                db.add(log_entry)
+                db.commit()
+                return {"success": False, "message": "OTP expired"}
+                
+            log_entry = DBAccessLog(
+                id=str(uuid.uuid4()),
+                door_id=door_id,
+                user_name="Guest (OTP)",
+                event_type=AccessLogType.GRANTED.value,
+                building_id=door.building_id,
+                details="Access granted via temporary OTP"
+            )
+            db.add(log_entry)
+            
+            door.updated_at = datetime.now()
+            db.commit()
+            
+        finally:
+            db.close()
+            
+        await self.trigger_door_open(door_id=door_id, reason="Temporary OTP")
+        return {"success": True, "message": "Access granted via temporary OTP"}
 
 _door_access_service: Optional[DoorAccessService] = None
 

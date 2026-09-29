@@ -541,6 +541,7 @@ import AddUserModal from "../modals/AddUserModal";
 import DoorAuthorizedUsersModal from "../modals/DoorAuthorizedUsersModal";
 import EditDoorModal from "../modals/EditDoorModal";
 import DoorActivityModal from "../modals/DoorActivityModal";
+import DoorOtpModal from "../modals/DoorOtpModal";
 
 function Doors({ showToast }) {
   const [groups, setGroups] = useState([]);
@@ -566,6 +567,9 @@ function Doors({ showToast }) {
 
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [selectedDoorForActivity, setSelectedDoorForActivity] = useState(null);
+
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [selectedDoorForOtp, setSelectedDoorForOtp] = useState(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -836,6 +840,11 @@ function Doors({ showToast }) {
   const handleViewActivity = (door) => {
     setSelectedDoorForActivity(door);
     setShowActivityModal(true);
+  };
+
+  const handleShowOtp = (door) => {
+    setSelectedDoorForOtp(door);
+    setShowOtpModal(true);
   };
 
   const handleEditSubmit = async (doorId, data) => {
@@ -1140,6 +1149,15 @@ function Doors({ showToast }) {
                         <button
                           type="button"
                           className="pro-icon-card-btn"
+                          title="Generate OTP"
+                          onClick={() => handleShowOtp(door)}
+                        >
+                          <i className="fas fa-key text-warning"></i>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="pro-icon-card-btn"
                           title="Edit door"
                           onClick={() => handleEditDoor(door)}
                         >
@@ -1227,6 +1245,17 @@ function Doors({ showToast }) {
         onHide={() => {
           setShowActivityModal(false);
           setSelectedDoorForActivity(null);
+        }}
+        showToast={showToast}
+      />
+
+      <DoorOtpModal
+        show={showOtpModal}
+        door={selectedDoorForOtp}
+        onHide={() => {
+          setShowOtpModal(false);
+          setSelectedDoorForOtp(null);
+          loadData();
         }}
         showToast={showToast}
       />

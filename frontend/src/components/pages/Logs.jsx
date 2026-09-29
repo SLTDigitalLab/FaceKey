@@ -117,7 +117,7 @@ function Logs({ showToast }) {
 
     if (Number.isNaN(date.getTime())) return String(value);
 
-    return date.toLocaleString();
+    return date.toLocaleString('en-US', { timeZone: 'Asia/Colombo' });
   };
 
   const getTodayCount = () => {

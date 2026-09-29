@@ -652,6 +652,15 @@ export const api = {
     return handleResponse(res, "Failed to unlock door");
   },
 
+  async generateTemporaryOtp(doorId) {
+    const res = await fetch(`${API_BASE}/doors/${doorId}/generate-otp`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(res, "Failed to generate OTP");
+  },
+
   async getDoor(doorId) {
     const res = await fetch(`${API_BASE}/doors/${encodeURIComponent(doorId)}`, {
       headers: getAuthHeaders(),

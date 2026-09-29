@@ -45,6 +45,8 @@ class Door(BaseModel):
     is_locked: bool = Field(default=True)
     api_key: Optional[str] = Field(default=None, description="API Key for door authentication")
     building_id: str = Field(..., description="Building this door belongs to")
+    temporary_otp: Optional[str] = Field(default=None, description="Admin generated temporary OTP")
+    temporary_otp_expires_at: Optional[datetime] = Field(default=None, description="Temporary OTP expiration")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     
@@ -143,6 +145,9 @@ class AccessLog(BaseModel):
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
 
+
+class VerifyTemporaryOtpRequest(BaseModel):
+    otp: str
 
 class DoorOpenRequest(BaseModel):
     """Request to open a specific door."""
