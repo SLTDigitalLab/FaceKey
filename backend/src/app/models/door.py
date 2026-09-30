@@ -27,3 +27,14 @@ class Door(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     building = relationship("Building", back_populates="doors")
+
+class GuestOTP(Base):
+    __tablename__ = "guest_otps"
+
+    id = Column(String(64), primary_key=True, index=True)
+    isnp_number = Column(String(100), nullable=False)
+    door_id = Column(String(64), nullable=False, index=True)
+    otp = Column(String(10), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    is_one_time = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

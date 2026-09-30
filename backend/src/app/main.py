@@ -3,6 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from dotenv import load_dotenv
 load_dotenv()
+import os
+import time
+
+# Set timezone to Sri Lanka everywhere
+os.environ['TZ'] = 'Asia/Colombo'
+if hasattr(time, 'tzset'):
+    time.tzset()
 
 from src.app.api.v1 import door_access
 from src.app.core.config import settings

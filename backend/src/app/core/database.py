@@ -29,6 +29,13 @@ DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAM
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
+from sqlalchemy import event
+@event.listens_for(engine, "connect")
+def set_timezone(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("SET time_zone = '+05:30'")
+    cursor.close()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

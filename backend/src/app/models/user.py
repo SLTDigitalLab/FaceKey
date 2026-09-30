@@ -15,5 +15,8 @@ class User(Base):
     face_registered = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
     authorized_doors = Column(JSON, default=list)
+    temporary_otp = Column(String(10), nullable=True)
+    temporary_otp_expires_at = Column(DateTime(timezone=True), nullable=True)
+    temporary_otp_one_time = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

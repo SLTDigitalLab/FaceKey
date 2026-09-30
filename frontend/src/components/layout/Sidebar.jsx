@@ -135,6 +135,17 @@ function Sidebar({ isOpen, onClose, adminProfile, onLogout }) {
 
         <li className="nav-item">
           <NavLink
+            to="/guest-otps"
+            className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+            onClick={onClose}
+          >
+            <i className="fas fa-key"></i>
+            <span>Guest OTPs</span>
+          </NavLink>
+        </li>
+
+        <li className="nav-item">
+          <NavLink
             to="/logs"
             className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
             onClick={onClose}

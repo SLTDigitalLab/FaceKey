@@ -366,6 +366,10 @@ async function handleResponse(res, fallbackMessage) {
       message = text || fallbackMessage;
     }
 
+    if (typeof message === "object") {
+      message = JSON.stringify(message);
+    }
+
     throw new Error(message);
   }
 
@@ -659,6 +663,38 @@ export const api = {
     });
 
     return handleResponse(res, "Failed to generate OTP");
+  },
+
+  async createGuestOtp(isnpNumber, doorId, hours = 24, oneTime = false) {
+    const res = await fetch(`${API_BASE}/guest-otps`, {
+      method: "POST",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        isnp_number: isnpNumber,
+        door_id: doorId,
+        hours: hours,
+        is_one_time: oneTime
+      }),
+    });
+
+    return handleResponse(res, "Failed to create guest OTP");
+  },
+
+  async getGuestOtps() {
+    const res = await fetch(`${API_BASE}/guest-otps`, {
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(res, "Failed to fetch guest OTPs");
+  },
+
+  async deleteGuestOtp(otpId) {
+    const res = await fetch(`${API_BASE}/guest-otps/${otpId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(res, "Failed to delete guest OTP");
   },
 
   async getDoor(doorId) {

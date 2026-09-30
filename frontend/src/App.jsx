@@ -15,6 +15,7 @@ import AdminLogin from "./components/pages/AdminLogin";
 import Toast from "./components/layout/Toast";
 import { api } from "./services/api";
 import Tenants from "./components/pages/Tenants";
+import GuestOtps from "./components/pages/GuestOtps";
 
 function App() {
   const [toasts, setToasts] = useState([]);
@@ -130,6 +131,8 @@ function App() {
             <Route path="/users" element={<Users showToast={showToast} />} />
 
             <Route path="/logs" element={<Logs showToast={showToast} />} />
+
+            <Route path="/guest-otps" element={<GuestOtps showToast={showToast} />} />
 
             <Route
               path="/tenants"

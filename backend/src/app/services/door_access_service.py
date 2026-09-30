@@ -25,6 +25,7 @@ from src.app.models import (
     Tenant as DBTenant,
     User as DBUser,
 )
+from src.app.models.door import GuestOTP as DBGuestOTP
 from src.app.models.door_access import (
     AccessLog,
     AccessLogType,
@@ -2640,6 +2641,80 @@ class DoorAccessService:
         finally:
             db.close()
 
+    def create_guest_otp(self, actor_admin_id: str, isnp_number: str, door_id: str, hours: float = 24.0, is_one_time: bool = False) -> Dict[str, Any]:
+        db = self._get_db()
+        try:
+            actor = self._require_active_admin(db, actor_admin_id)
+            
+            import random
+            otp = f"{random.randint(0, 999999):06d}"
+            
+            guest_otp = DBGuestOTP(
+                id=str(uuid.uuid4()),
+                isnp_number=isnp_number,
+                door_id=door_id,
+                otp=otp,
+                expires_at=datetime.now() + timedelta(hours=hours),
+                is_one_time=is_one_time
+            )
+            
+            db.add(guest_otp)
+            db.commit()
+            db.refresh(guest_otp)
+            
+            return {
+                "id": guest_otp.id,
+                "isnp_number": guest_otp.isnp_number,
+                "door_id": guest_otp.door_id,
+                "otp": guest_otp.otp,
+                "expires_at": guest_otp.expires_at,
+                "is_one_time": guest_otp.is_one_time,
+                "created_at": guest_otp.created_at
+            }
+        finally:
+            db.close()
+
+    def get_guest_otps(self, actor_admin_id: str) -> List[Dict[str, Any]]:
+        db = self._get_db()
+        try:
+            actor = self._require_active_admin(db, actor_admin_id)
+            
+            # Auto-delete expired OTPs
+            now = datetime.now()
+            expired_otps = db.query(DBGuestOTP).filter(DBGuestOTP.expires_at < now).all()
+            if expired_otps:
+                for otp in expired_otps:
+                    db.delete(otp)
+                db.commit()
+                
+            # Return only active OTPs
+            otps = db.query(DBGuestOTP).all()
+            return [
+                {
+                    "id": o.id,
+                    "isnp_number": o.isnp_number,
+                    "door_id": o.door_id,
+                    "otp": o.otp,
+                    "expires_at": o.expires_at,
+                    "is_one_time": o.is_one_time,
+                    "created_at": o.created_at
+                }
+                for o in otps
+            ]
+        finally:
+            db.close()
+
+    def delete_guest_otp(self, actor_admin_id: str, otp_id: str) -> None:
+        db = self._get_db()
+        try:
+            actor = self._require_active_admin(db, actor_admin_id)
+            otp = db.query(DBGuestOTP).filter(DBGuestOTP.id == otp_id).first()
+            if otp:
+                db.delete(otp)
+                db.commit()
+        finally:
+            db.close()
+
     async def verify_temporary_otp(self, door_id: str, otp: str) -> Dict[str, Any]:
         db = self._get_db()
         try:
@@ -2647,34 +2722,53 @@ class DoorAccessService:
             if not door:
                 return {"success": False, "message": "Door not found"}
                 
-            if not door.temporary_otp or door.temporary_otp != otp:
+            now = datetime.now()
+
+            # First, check if OTP belongs to a guest OTP record
+            guest_otp = db.query(DBGuestOTP).filter(DBGuestOTP.otp == otp, DBGuestOTP.door_id == door_id).first()
+            if guest_otp:
+                # Check expiration
+                if guest_otp.expires_at:
+                    tz_now = datetime.now().astimezone(guest_otp.expires_at.tzinfo) if guest_otp.expires_at.tzinfo else now
+                    if guest_otp.expires_at < tz_now:
+                        log_entry = DBAccessLog(id=str(uuid.uuid4()), door_id=door_id, event_type=AccessLogType.DENIED.value, building_id=door.building_id, details=f"Expired guest OTP entered for {guest_otp.isnp_number}")
+                        db.add(log_entry)
+                        db.delete(guest_otp)  # Auto-delete expired OTP
+                        db.commit()
+                        return {"success": False, "message": "Guest OTP expired"}
+                
+                # Consume one-time OTP
+                if guest_otp.is_one_time:
+                    db.delete(guest_otp)
+                
                 log_entry = DBAccessLog(
                     id=str(uuid.uuid4()),
                     door_id=door_id,
-                    event_type=AccessLogType.DENIED.value,
+                    user_name=f"Guest ({guest_otp.isnp_number})",
+                    event_type=AccessLogType.GRANTED.value,
                     building_id=door.building_id,
-                    details="Invalid temporary OTP entered"
+                    details=f"Access granted via guest OTP for {guest_otp.isnp_number}"
                 )
+                db.add(log_entry)
+                db.commit()
+                
+                await self.trigger_door_open(door_id=door_id, reason=f"Guest OTP ({guest_otp.isnp_number})")
+                return {"success": True, "message": "Access granted via guest OTP"}
+
+            # If not guest OTP, check if it's the door's general OTP
+            if not door.temporary_otp or door.temporary_otp != otp:
+                log_entry = DBAccessLog(id=str(uuid.uuid4()), door_id=door_id, event_type=AccessLogType.DENIED.value, building_id=door.building_id, details="Invalid temporary OTP entered")
                 db.add(log_entry)
                 db.commit()
                 return {"success": False, "message": "Invalid OTP"}
                 
-            # If the database returns naive datetime for DATETIME columns
-            now = datetime.now()
-            if door.temporary_otp_expires_at and door.temporary_otp_expires_at.tzinfo:
-                now = datetime.now().astimezone(door.temporary_otp_expires_at.tzinfo)
-                
-            if door.temporary_otp_expires_at and door.temporary_otp_expires_at < now:
-                log_entry = DBAccessLog(
-                    id=str(uuid.uuid4()),
-                    door_id=door_id,
-                    event_type=AccessLogType.DENIED.value,
-                    building_id=door.building_id,
-                    details="Expired temporary OTP entered"
-                )
-                db.add(log_entry)
-                db.commit()
-                return {"success": False, "message": "OTP expired"}
+            if door.temporary_otp_expires_at:
+                tz_now = datetime.now().astimezone(door.temporary_otp_expires_at.tzinfo) if door.temporary_otp_expires_at.tzinfo else now
+                if door.temporary_otp_expires_at < tz_now:
+                    log_entry = DBAccessLog(id=str(uuid.uuid4()), door_id=door_id, event_type=AccessLogType.DENIED.value, building_id=door.building_id, details="Expired temporary OTP entered")
+                    db.add(log_entry)
+                    db.commit()
+                    return {"success": False, "message": "OTP expired"}
                 
             log_entry = DBAccessLog(
                 id=str(uuid.uuid4()),
@@ -2682,13 +2776,15 @@ class DoorAccessService:
                 user_name="Guest (OTP)",
                 event_type=AccessLogType.GRANTED.value,
                 building_id=door.building_id,
-                details="Access granted via temporary OTP"
+                details="Access granted via door temporary OTP"
             )
             db.add(log_entry)
-            
             door.updated_at = datetime.now()
             db.commit()
             
+        except Exception as e:
+            db.rollback()
+            raise e
         finally:
             db.close()
             

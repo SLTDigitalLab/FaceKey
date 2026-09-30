@@ -12,7 +12,7 @@ from src.app.models.door_access import (
     Door, User, Building, AccessLog,
     AdminCreate, AdminLoginRequest, BuildingCreate, BuildingCreateWithAdmin,
     CameraAccessRequest, DoorAuthorizationUpdate,
-    DoorCreate, DoorOpenRequest, TenantCreate, UserCreate,
+    DoorCreate, DoorOpenRequest, TenantCreate, UserCreate, GuestOTPRequest, GuestOTP
 )
 from src.app.services.door_access_service import get_door_access_service
 
@@ -1090,6 +1090,47 @@ async def authorize_user_doors(
     except Exception as error:
         handle_admin_error(error)
 
+
+@router.post("/guest-otps")
+async def create_guest_otp(
+    request: GuestOTPRequest,
+    actor_admin_id: str = Header(default=None, alias="X-Admin-Id"),
+):
+    service = get_door_access_service()
+    try:
+        result = service.create_guest_otp(
+            actor_admin_id=actor_admin_id,
+            isnp_number=request.isnp_number,
+            door_id=request.door_id,
+            hours=request.hours,
+            is_one_time=request.is_one_time
+        )
+        return {"success": True, "otp": result}
+    except Exception as error:
+        handle_admin_error(error)
+
+@router.get("/guest-otps")
+async def get_guest_otps(
+    actor_admin_id: str = Header(default=None, alias="X-Admin-Id"),
+):
+    service = get_door_access_service()
+    try:
+        otps = service.get_guest_otps(actor_admin_id=actor_admin_id)
+        return otps
+    except Exception as error:
+        handle_admin_error(error)
+
+@router.delete("/guest-otps/{otp_id}")
+async def delete_guest_otp(
+    otp_id: str,
+    actor_admin_id: str = Header(default=None, alias="X-Admin-Id"),
+):
+    service = get_door_access_service()
+    try:
+        service.delete_guest_otp(actor_admin_id=actor_admin_id, otp_id=otp_id)
+        return {"success": True}
+    except Exception as error:
+        handle_admin_error(error)
 
 @router.post("/users/{user_id:path}/face-registered")
 async def set_face_registered(

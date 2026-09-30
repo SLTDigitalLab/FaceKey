@@ -64,11 +64,42 @@ class User(BaseModel):
     face_registered: bool = Field(default=True)
     is_active: bool = Field(default=True)
     authorized_doors: List[str] = Field(default_factory=list, description="Specific doors user can access")
+    temporary_otp: Optional[str] = Field(default=None, description="Admin generated temporary OTP")
+    temporary_otp_expires_at: Optional[datetime] = Field(default=None, description="Temporary OTP expiration")
+    temporary_otp_one_time: bool = Field(default=False, description="Is OTP one-time use")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
+
+
+class EmployeeOtpRequest(BaseModel):
+    """Request schema for generating employee OTP."""
+    hours: int = Field(default=24, description="Validity period in hours")
+    one_time: bool = Field(default=False, description="Is OTP one-time use")
+    
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+
+class GuestOTP(BaseModel):
+    id: str
+    isnp_number: str
+    door_id: str
+    otp: str
+    expires_at: Optional[datetime]
+    is_one_time: bool
+    created_at: datetime
+    
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+class GuestOTPRequest(BaseModel):
+    isnp_number: str
+    door_id: str
+    hours: float = 24.0
+    is_one_time: bool = False
 
 
 class Building(BaseModel):
